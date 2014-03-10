@@ -2,6 +2,7 @@ name = "Migrate default content"
 description = "Populate default content using the migrate module."
 package = "Migrate"
 core = 7.x
+dependencies[] = entity
 dependencies[] = migrate
 dependencies[] = migrate_extras
 dependencies[] = libraries

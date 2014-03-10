@@ -15,6 +15,8 @@ abstract class defaultContentBaseMigration extends DynamicMigration {
    */
   protected $arguments;
 
+  protected $mappedFields;
+
   public function __construct() {
     parent::__construct();
     $this->migrationData = $this->getMigrationConfigData($this->arguments['machine_name']);;
@@ -29,7 +31,7 @@ abstract class defaultContentBaseMigration extends DynamicMigration {
    *
    * @return array
    */
-  public function getMigrationConfigData($machine_name) {
+  protected function getMigrationConfigData($machine_name) {
     $config = migrate_default_content_get_config_files();
     foreach ($config as $data) {
       if ($data['name'] == $machine_name) {
@@ -45,5 +47,62 @@ abstract class defaultContentBaseMigration extends DynamicMigration {
    */
   protected function generateMachineName($class_name = NULL) {
     return $this->arguments['machine_name'];
+  }
+
+  protected function getMigrationSource() {
+    $this->csvColumns = !empty($this->csvColumns) ? $this->csvColumns : array();
+    $csv_cols[] = array('id', 'Unique ID');
+
+    foreach ($this->migrationData['fields'] as $field) {
+      $key = key($field);
+      $value = $field[$key];
+      if (!empty($value['source'])) {
+        $csv_cols[] = array($key, $value['source']);
+      }
+    }
+
+    // Rebuild the csv columns array.
+    $this->csvColumns = array_merge($csv_cols, $this->csvColumns);
+
+    return new MigrateSourceCSV($this->arguments['source_path'] . '/' . $this->arguments['source_file'], $this->csvColumns, array('header_rows' => 1));
+  }
+
+  protected function addDefaultMappings() {
+    foreach ($this->migrationData['fields'] as $field) {
+      $key = key($field);
+      $value = $field[$key];
+      if (is_array($value) && count($value) == 1) {
+        $this->addFieldMapping($key, $key);
+      }
+      else {
+        $this->preprocessMapping($key, $value);
+      }
+    }
+  }
+
+  private function preprocessMapping($key, $value) {
+    if (!is_array($value)) {
+      return;
+    }
+
+    // Handle empty, default values.
+    if (!empty($value['default_value'])) {
+      $this->addFieldMapping($key)->defaultValue($value['default_value']);
+    }
+
+    if (!empty($value['separator'])) {
+      $this->addFieldMapping($key, $key)->separator($value['separator']);
+    }
+
+    if (!empty($value['components']) && is_array($value['components'])) {
+      foreach ($value['components'] as $name => $component) {
+        if ($name == 'source_dir') {
+          $component = $this->arguments['source_path'] . '/' . $component;
+        }
+        $this
+          ->addFieldMapping($key . ':' . $name)
+          ->defaultValue($component);
+      }
+    }
   }
 }
