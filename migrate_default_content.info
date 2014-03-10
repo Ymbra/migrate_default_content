@@ -1,0 +1,10 @@
+name = "Migrate default content"
+description = "Populate default content using the migrate module."
+package = "Migrate"
+core = 7.x
+dependencies[] = migrate
+dependencies[] = migrate_extras
+dependencies[] = libraries
+
+files[] = 'includes/migrate_default_content.migrate.base.inc'
+files[] = 'includes/migrate_default_content.migrate.entity.inc'

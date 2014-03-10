@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * Implements hook_libraries_info().
+ */
+function migrate_default_content_libraries_info() {
+  $libraries['spyc'] = array(
+    'name' => 'Spyc',
+    'version' => '0.5.1',
+    'vendor url' => 'https://github.com/mustangostang/spyc',
+    'download url' => 'https://raw2.github.com/mustangostang/spyc/master/Spyc.php',
+    'version arguments' => array(
+      'file' => 'Spyc.php',
+      'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@',
+    ),
+    'files' => array(
+      'php' => array('Spyc.php'),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function migrate_default_content_requirements($phase) {
+  $return = array();
+  // Ensure translations don't break at install time.
+  drupal_load('module', 'libraries');
+  $libraries = migrate_default_content_libraries_info();
+  foreach ($libraries as $name => $info) {
+    $library = libraries_detect($name);
+    $return[$name] = array(
+      'title' => $library['name'],
+      'severity' => $library['installed'] ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+      'value' => $library['installed'] ? l($library['version'], $library['vendor url']) : $library['error message'],
+    );
+  }
+
+  return $return;
+}
+
+/**
+ * Returns an array with all the configuration saved into the yaml files.
+ *
+ * @param string $content_path
+ *  Internal path where the yaml and data files are stored.
+ *
+ * @return array
+ */
+function migrate_default_content_get_config_files($content_path = '') {
+  $config = &drupal_static(__FUNCTION__, array());
+  if (empty($config)) {
+    libraries_load('spyc');
+    if (empty($content_path)) {
+      $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
+    }
+    $files = file_scan_directory($content_path, '/^.+\.yaml/');
+    foreach ($files as $file) {
+      $config[] = Spyc::YAMLLoad($file->uri);
+    }
+  }
+  return $config;
+}
+
+/**
+ * Implements hook_flush_caches().
+ */
+function migrate_default_content_flush_caches() {
+  $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
+  $config = migrate_default_content_get_config_files($content_path);
+  foreach ($config as $data) {
+    Migration::registerMigration($data['class'],
+      $data['name'],
+      array('source_file' => $content_path . '/data/' . $data['data_file']));
+  }
+}
