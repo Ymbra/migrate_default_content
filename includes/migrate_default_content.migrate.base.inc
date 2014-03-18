@@ -1,7 +1,7 @@
 <?php
 
 
-abstract class defaultContentBaseMigration extends DynamicMigration {
+abstract class defaultBaseMigration extends DynamicMigration {
 
   /**
    * @var array $migrationData
@@ -87,11 +87,14 @@ abstract class defaultContentBaseMigration extends DynamicMigration {
 
     // Handle empty, default values.
     if (!empty($value['default_value'])) {
-      $this->addFieldMapping($key)->defaultValue($value['default_value']);
+      $migrate = $this->addFieldMapping($key);
+      $migrate->defaultValue($value['default_value']);
     }
 
+    // Split values.
     if (!empty($value['separator'])) {
-      $this->addFieldMapping($key, $key)->separator($value['separator']);
+      $migrate = $this->addFieldMapping($key, $key);
+      $migrate->separator($value['separator']);
     }
 
     if (!empty($value['components']) && is_array($value['components'])) {
@@ -99,10 +102,17 @@ abstract class defaultContentBaseMigration extends DynamicMigration {
         if ($name == 'source_dir') {
           $component = $this->arguments['source_path'] . '/' . $component;
         }
-        $this
-          ->addFieldMapping($key . ':' . $name)
-          ->defaultValue($component);
+        $migrate = $this->addFieldMapping($key . ':' . $name);
+        $migrate->defaultValue($component);
       }
     }
+
+    if (!empty($value['source_migration'])) {
+      if (empty($migrate) || !$migrate instanceof MigrateFieldMapping) {
+        $migrate = $this->addFieldMapping($key, $key);
+      }
+      $migrate->sourceMigration(array($value['source_migration']));
+    }
   }
+
 }

@@ -4,7 +4,7 @@
  * Populate content for entities.
  */
 
-class defaultContentEntity extends defaultContentBaseMigration {
+class defaultContentEntity extends defaultBaseMigration {
 
   public function __construct(array $arguments) {
     $this->arguments = $arguments;

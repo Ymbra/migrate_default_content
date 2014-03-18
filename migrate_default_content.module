@@ -70,6 +70,7 @@ function migrate_default_content_flush_caches() {
   $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
   $config = migrate_default_content_get_config_files($content_path);
   foreach ($config as $data) {
+    Migration::deregisterMigration($data['name']);
     Migration::registerMigration($data['class'],
       $data['name'],
       array(
