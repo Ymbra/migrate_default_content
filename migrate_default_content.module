@@ -80,3 +80,15 @@ function migrate_default_content_flush_caches() {
     );
   }
 }
+
+/**
+ * Implements hook_entity_presave.
+ * Workaround for a bug when saving taxonomy_term entities:
+ *  In taxonomy_term_save $term->vocabulary_machine_name is not converted to vid.
+ */
+function migrate_default_content_entity_presave($entity, $type) {
+  if ($type == "taxonomy_term" && !$entity->vid && $entity->vocabulary_machine_name) {
+    // loads taxonomy vocabulary and assigns its vid to the taxonomy term.
+    $entity->vid = taxonomy_vocabulary_machine_name_load($entity->vocabulary_machine_name)->vid;
+  }
+}
