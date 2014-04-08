@@ -20,6 +20,10 @@ abstract class defaultBaseMigration extends DynamicMigration {
   public function __construct() {
     parent::__construct();
     $this->migrationData = $this->getMigrationConfigData($this->arguments['machine_name']);;
+    // Handle dependencies.
+    if (!empty($this->migrationData['dependencies'])) {
+      $this->dependencies = $this->migrationData['dependencies'];
+    }
   }
 
   /**
