@@ -85,6 +85,11 @@ abstract class defaultBaseMigration extends DynamicMigration {
       return;
     }
 
+    // Handle default mapping, if there's any.
+    if (!empty($value['source'])) {
+      $this->addFieldMapping($key, $key);
+    }
+
     // Handle empty, default values.
     if (!empty($value['default_value'])) {
       $migrate = $this->addFieldMapping($key);
