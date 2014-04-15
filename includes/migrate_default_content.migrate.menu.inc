@@ -10,7 +10,7 @@ class defaultContentMenu extends defaultContentBaseMigration {
     $this->arguments = $arguments;
     parent::__construct();
 
-    $this->description = t('Import @type - @bundle from file.', array('@type' => $this->migrationData['entity_type'], '@bundle' => $this->migrationData['bundle']));
+    $this->description = t('Import @menu_name menu items', array('@menu_name' => $this->migrationData['menu_name']));
     $this->addDefaultMappings();
 
     // Create a map object for tracking the relationships between source rows.
