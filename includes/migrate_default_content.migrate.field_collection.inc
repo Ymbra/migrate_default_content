@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Populate content for entities.
+ * Populate content for field collections.
  */
 
 class defaultContentFieldCollection extends defaultContentBaseMigration {
