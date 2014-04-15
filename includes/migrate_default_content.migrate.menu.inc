@@ -46,7 +46,9 @@ class defaultContentMenu extends defaultContentBaseMigration {
     if (empty($weight)) {
       $weight = 0;
     }
-    $row->weight = ++$weight;
+    if (empty($row->weight)) {
+      $row->weight = ++$weight;
+    }
     $row->module = 'menu';
   }
 
