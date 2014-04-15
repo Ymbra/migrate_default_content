@@ -42,13 +42,6 @@ class defaultContentMenu extends defaultContentBaseMigration {
    * - Set module to menu to support menu_firstchild.
    */
   public function prepareRow($row) {
-    static $weight;
-    if (empty($weight)) {
-      $weight = 0;
-    }
-    if (empty($row->weight)) {
-      $row->weight = ++$weight;
-    }
     $row->module = 'menu';
   }
 
