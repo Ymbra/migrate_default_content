@@ -10,4 +10,5 @@ dependencies[] = libraries
 files[] = 'includes/migrate_default_content.migrate.base.inc'
 files[] = 'includes/migrate_default_content.migrate.entity.inc'
 files[] = 'includes/migrate_default_content_stub.migrate.entity.inc'
+files[] = 'includes/migrate_default_content.migrate.menu.inc'
 files[] = 'includes/migrate_default_content.migrate.field_collection.inc'
