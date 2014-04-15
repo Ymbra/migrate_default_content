@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Populate content for entities.
+ * Create default items to populate menus.
  */
 
 class defaultContentMenu extends defaultContentBaseMigration {
