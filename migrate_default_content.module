@@ -77,6 +77,7 @@ function migrate_default_content_flush_caches() {
         'group_name' => t('Migrate default content'),
         'source_file' => $data['data_file'],
         'source_path' => $content_path . '/data',
+        'disable_hooks' => isset($data['disable_hooks']) ? $data['disable_hooks'] : array(),
       )
     );
   }
