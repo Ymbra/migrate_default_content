@@ -74,6 +74,7 @@ function migrate_default_content_flush_caches() {
     Migration::registerMigration($data['class'],
       $data['name'],
       array(
+        'group_name' => t('Migrate default content'),
         'source_file' => $data['data_file'],
         'source_path' => $content_path . '/data',
       )
