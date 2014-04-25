@@ -76,7 +76,7 @@ abstract class defaultBaseMigration extends DynamicMigration {
       $key = key($field);
       $value = $field[$key];
       if (is_array($value) && count($value) == 1) {
-        $this->addFieldMapping($key, $key);
+        $this->addFieldMapping($key, $key, FALSE);
       }
       else {
         $this->preprocessMapping($key, $value);
@@ -91,7 +91,7 @@ abstract class defaultBaseMigration extends DynamicMigration {
 
     // Handle default mapping, if there's any.
     if (!empty($value['source'])) {
-      $this->addFieldMapping($key, $key);
+      $this->addFieldMapping($key, $key, FALSE);
     }
 
     // Handle empty, default values.
@@ -102,7 +102,7 @@ abstract class defaultBaseMigration extends DynamicMigration {
 
     // Split values.
     if (!empty($value['separator'])) {
-      $migrate = $this->addFieldMapping($key, $key);
+      $migrate = $this->addFieldMapping($key, $key, FALSE);
       $migrate->separator($value['separator']);
     }
 
@@ -118,7 +118,7 @@ abstract class defaultBaseMigration extends DynamicMigration {
 
     if (!empty($value['source_migration'])) {
       if (empty($migrate) || !$migrate instanceof MigrateFieldMapping) {
-        $migrate = $this->addFieldMapping($key, $key);
+        $migrate = $this->addFieldMapping($key, $key, FALSE);
       }
       $migrate->sourceMigration(array($value['source_migration']));
     }
