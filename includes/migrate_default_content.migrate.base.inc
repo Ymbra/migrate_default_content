@@ -1,7 +1,7 @@
 <?php
 
 
-abstract class defaultBaseMigration extends DynamicMigration {
+abstract class defaultBaseMigration extends Migration {
 
   /**
    * @var array $migrationData
