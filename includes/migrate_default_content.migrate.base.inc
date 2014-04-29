@@ -17,9 +17,9 @@ abstract class defaultBaseMigration extends Migration {
 
   protected $mappedFields;
 
-  public function __construct() {
-    parent::__construct();
-    $this->migrationData = $this->getMigrationConfigData($this->arguments['machine_name']);;
+  public function __construct($arguments) {
+    parent::__construct($arguments);
+    $this->migrationData = $this->getMigrationConfigData($arguments['machine_name']);;
     // Handle dependencies.
     if (!empty($this->migrationData['dependencies'])) {
       $this->dependencies = $this->migrationData['dependencies'];

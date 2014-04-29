@@ -4,7 +4,7 @@
  * Populate content for entities.
  */
 
-class defaultContentEntityWithStub extends defaultContentEntity {
+class defaultEntityWithStub extends defaultEntity {
 
   /**
    * Create a node stub to be able to relate content with itself.

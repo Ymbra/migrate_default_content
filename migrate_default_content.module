@@ -64,6 +64,22 @@ function migrate_default_content_get_config_files($content_path = '') {
 }
 
 /**
+ * Implements hook_migrate_api().
+ */
+function migrate_default_content_migrate_api() {
+  $api = array(
+    'api' => 2,
+    'groups' => array(
+      'migrate_default_content' => array(
+        'title' => t('Migrate default content'),
+      ),
+    ),
+  );
+
+  return $api;
+}
+
+/**
  * Implements hook_flush_caches().
  */
 function migrate_default_content_flush_caches() {
@@ -74,7 +90,7 @@ function migrate_default_content_flush_caches() {
     Migration::registerMigration($data['class'],
       $data['name'],
       array(
-        'group_name' => t('Migrate default content'),
+        'group_name' => 'migrate_default_content',
         'source_file' => $data['data_file'],
         'source_path' => $content_path . '/data',
         'disable_hooks' => isset($data['disable_hooks']) ? $data['disable_hooks'] : array(),

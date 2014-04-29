@@ -4,11 +4,10 @@
  * Populate content for entities.
  */
 
-class defaultContentEntity extends defaultBaseMigration {
+class defaultEntity extends defaultBaseMigration {
 
   public function __construct(array $arguments) {
-    $this->arguments = $arguments;
-    parent::__construct();
+    parent::__construct($arguments);
 
     $this->description = t('Import @type - @bundle from file.', array('@type' => $this->migrationData['entity_type'], '@bundle' => $this->migrationData['bundle']));
     $this->addDefaultMappings();

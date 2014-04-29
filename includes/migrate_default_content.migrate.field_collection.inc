@@ -4,7 +4,7 @@
  * Populate content for field collections.
  */
 
-class defaultContentFieldCollection extends defaultContentBaseMigration {
+class defaultFieldCollection extends defaultBaseMigration {
 
   public function __construct(array $arguments) {
     $this->arguments = $arguments;
@@ -41,4 +41,5 @@ class defaultContentFieldCollection extends defaultContentBaseMigration {
       $row->host_entity_id = $host_nid;
     }
   }
+
 }
