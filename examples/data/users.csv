@@ -1,0 +1,4 @@
+Unique ID,Name,Email,Roles
+user1,user1,user1@example.com,"administrator"
+user2,user2,user2@example.com,"administrator"
+user3,user3,user3@example.com,"editor|administrator"

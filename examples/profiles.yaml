@@ -1,0 +1,15 @@
+name: profiles
+description: "Default profiles"
+class: defaultEntity
+entity_type: profile2
+bundle: mi_registro
+data_origin: csv
+data_file: profiles.csv
+dependencies:
+  users
+fields:
+  - field_mi_testfield:
+      source: Info
+  - uid:
+      source: User
+      source_migration: users

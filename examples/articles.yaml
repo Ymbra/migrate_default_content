@@ -1,0 +1,23 @@
+name: article
+description: "Default content for article content type"
+class: defaultEntity
+entity_type: node
+bundle: article
+data_origin: csv
+data_file: articles.csv
+fields:
+  - title:
+      source: Title
+  - body:
+      source: Body
+  - language:
+      source: Language
+  - field_image:
+      source: Media
+      separator: "|"
+      components:
+        file_replace: 1 #FILE_EXISTS_REPLACE
+        source_dir: "images"
+  - author:
+      source:
+      default_value: 1

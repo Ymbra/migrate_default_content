@@ -1,0 +1,17 @@
+name: users
+description: "Default users"
+class: defaultUser
+entity_type: user
+bundle: user
+data_origin: csv
+data_file: users.csv
+fields:
+  - name:
+      source: Name
+  - mail:
+      source: Email
+  - roles:
+      source: Roles
+  - status:
+      source:
+      default_value: 1
