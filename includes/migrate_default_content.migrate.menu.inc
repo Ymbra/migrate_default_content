@@ -4,11 +4,11 @@
  * Create default items to populate menus.
  */
 
-class defaultContentMenu extends defaultContentBaseMigration {
+class defaultMenu extends defaultBaseMigration {
 
   public function __construct(array $arguments) {
     $this->arguments = $arguments;
-    parent::__construct();
+    parent::__construct($arguments);
 
     $this->description = t('Import @menu_name menu items', array('@menu_name' => $this->migrationData['menu_name']));
     $this->addDefaultMappings();
