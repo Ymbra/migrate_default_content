@@ -12,6 +12,10 @@ class defaultEntity extends defaultBaseMigration {
     $this->description = t('Import @type - @bundle from file.', array('@type' => $this->migrationData['entity_type'], '@bundle' => $this->migrationData['bundle']));
     $this->addDefaultMappings();
 
+    // Create a MigrateSource object.
+    $this->source = $this->getMigrationSource();
+    $this->destination = new MigrateDestinationEntityAPI($this->migrationData['entity_type'], $this->migrationData['bundle'], array('text_format' => 'filtered_html'));
+
     // Create a map object for tracking the relationships between source rows.
     $this->map = new MigrateSQLMap($this->machineName,
       array(
@@ -21,11 +25,8 @@ class defaultEntity extends defaultBaseMigration {
           'not null' => TRUE,
         ),
       ),
-      MigrateDestinationEntityAPI::getKeySchema($this->migrationData['entity_type'], $this->migrationData['bundle']));
+      $this->destination->getKeySchema($this->migrationData['entity_type'], $this->migrationData['bundle']));
 
-    // Create a MigrateSource object.
-    $this->source = $this->getMigrationSource();
-    $this->destination = new MigrateDestinationEntityAPI($this->migrationData['entity_type'], $this->migrationData['bundle'], array('text_format' => 'filtered_html'));
   }
 
 }
