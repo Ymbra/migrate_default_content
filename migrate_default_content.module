@@ -85,8 +85,11 @@ function migrate_default_content_migrate_api() {
 function migrate_default_content_flush_caches() {
   $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
   $config = migrate_default_content_get_config_files($content_path);
+  // we'll use this one to check if there's an existing migrations that's not defined anymore.
+  $existing_migrations = _migrate_default_content_get_migrations_by_group();
   foreach ($config as $data) {
-    Migration::deregisterMigration($data['name']);
+    // remove the ones that are already defined.
+    unset($existing_migrations[$data['name']]);
     Migration::registerMigration($data['class'],
       $data['name'],
       array(
@@ -97,6 +100,31 @@ function migrate_default_content_flush_caches() {
       )
     );
   }
+  // If there's any migration here, it's not defined anymore. We need to deregister it.
+  if (!empty($existing_migrations)) {
+   foreach ($existing_migrations as $name => $migration) {
+    Migration::deregisterMigration($name);
+   }
+  }
+}
+
+/**
+ * Returns all migrations for a given group.
+ *
+ * @param string $group: Name of the group for the migrations we want. Defaults to 'migrate_default_content'
+ * @return array: All migrations for a given group.
+ * @see migrate_migrations()
+ */
+function _migrate_default_content_get_migrations_by_group($group_name = 'migrate_default_content') {
+  $migrations = migrate_migrations();
+  foreach ($migrations as $name => $migration) {
+    $group = $migration->getGroup();
+    if ($group->getName() != $group_name) {
+      // We only want migrations who belong to our group.
+      unset($migrations[$name]);
+    }
+  }
+  return $migrations;
 }
 
 /**
