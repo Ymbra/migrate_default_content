@@ -32,7 +32,6 @@ class defaultMenu extends defaultBaseMigration {
     // Parent menu.
     $this->addFieldMapping('menu_name')->defaultValue($this->migrationData['menu_name']);
     $this->addFieldMapping('plid', 'parent')->sourceMigration($this->getMachineName());
-
   }
 
   /**
@@ -44,6 +43,16 @@ class defaultMenu extends defaultBaseMigration {
     if (!empty($menu_link->node)) {
       $menu_link->link_path = 'node/' . $menu_link->node['destid1'];
       unset($menu_link->node);
+    }
+  }
+
+  /**
+   * Implements MigrateDestination::prepare().
+   * Adds default weight for menu item if there isn't any.
+   */
+  public function prepareRow($row) {
+    if (empty($row->weight)) {
+      $row->weight = 0;
     }
   }
 }
