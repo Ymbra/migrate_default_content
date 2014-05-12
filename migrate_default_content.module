@@ -102,9 +102,9 @@ function migrate_default_content_flush_caches() {
   }
   // If there's any migration here, it's not defined anymore. We need to deregister it.
   if (!empty($existing_migrations)) {
-    foreach ($existing_migrations as $name => $migration) {
-      Migration::deregisterMigration($name);
-    }
+   foreach ($existing_migrations as $name => $migration) {
+    Migration::deregisterMigration($name);
+   }
   }
 }
 
