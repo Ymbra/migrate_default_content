@@ -63,7 +63,7 @@ function migrate_default_content_get_config_files($content_path = '') {
   return $config;
 }
 
-function get_migrations_from_yamls() {
+function migrate_default_content_fetch_migrations() {
   $migrations = &drupal_static(__FUNCTION__);
   if (!isset($migrations)) {
     $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
@@ -92,7 +92,7 @@ function migrate_default_content_migrate_api() {
         'title' => t('Migrate default content'),
       ),
     ),
-    'migrations' => get_migrations_from_yamls(),
+    'migrations' => migrate_default_content_fetch_migrations(),
   );
 
   return $api;
@@ -102,7 +102,7 @@ function migrate_default_content_migrate_api() {
  * Implements hook_flush_caches().
  */
 function migrate_default_content_flush_caches() {
-  $defined_migrations = get_migrations_from_yamls();
+  $defined_migrations = migrate_default_content_fetch_migrations();
   // Register defined migrations.
   if (!empty($defined_migrations['migrations'])) {
     migrate_static_registration(array_keys($defined_migrations['migrations']));
