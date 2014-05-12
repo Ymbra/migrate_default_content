@@ -32,12 +32,12 @@ class defaultFieldCollection extends defaultBaseMigration {
    * Implements prepareRow.
    * Fixes host_entity_id
    */
-  function prepareRow($row) {
+  public function prepareRow($row) {
     if (!empty($row->host_entity_id)) {
       $host_legacy_id = $row->host_entity_id;
       $source_migration = Migration::getInstance($this->migrationData['host_migration']);
       $host_nid = $source_migration->getMap()->lookupDestinationID(array($host_legacy_id));
-      $host_nid = array_pop($host_nid);
+      $host_nid = array_shift($host_nid);
       $row->host_entity_id = $host_nid;
     }
   }
