@@ -63,6 +63,24 @@ function migrate_default_content_get_config_files($content_path = '') {
   return $config;
 }
 
+function migrate_default_content_fetch_migrations() {
+  $migrations = &drupal_static(__FUNCTION__);
+  if (!isset($migrations)) {
+    $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
+    $config = migrate_default_content_get_config_files($content_path);
+    foreach ($config as $data) {
+      $migrations[$data['name']] = array(
+        'class_name' => $data['class'],
+        'group_name' => 'migrate_default_content',
+        'disable_hooks' => isset($data['disable_hooks']) ? $data['disable_hooks'] : array(),
+        'source_file' => $data['data_file'],
+        'source_path' => $content_path . '/data',
+      );
+    }
+  }
+  return $migrations;
+}
+
 /**
  * Implements hook_migrate_api().
  */
@@ -74,6 +92,7 @@ function migrate_default_content_migrate_api() {
         'title' => t('Migrate default content'),
       ),
     ),
+    'migrations' => migrate_default_content_fetch_migrations(),
   );
 
   return $api;
@@ -83,19 +102,10 @@ function migrate_default_content_migrate_api() {
  * Implements hook_flush_caches().
  */
 function migrate_default_content_flush_caches() {
-  $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
-  $config = migrate_default_content_get_config_files($content_path);
-  foreach ($config as $data) {
-    Migration::deregisterMigration($data['name']);
-    Migration::registerMigration($data['class'],
-      $data['name'],
-      array(
-        'group_name' => 'migrate_default_content',
-        'source_file' => $data['data_file'],
-        'source_path' => $content_path . '/data',
-        'disable_hooks' => isset($data['disable_hooks']) ? $data['disable_hooks'] : array(),
-      )
-    );
+  $defined_migrations = migrate_default_content_fetch_migrations();
+  // Register defined migrations.
+  if (!empty($defined_migrations['migrations'])) {
+    migrate_static_registration(array_keys($defined_migrations['migrations']));
   }
 }
 
