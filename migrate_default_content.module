@@ -63,25 +63,28 @@ function migrate_default_content_get_config_files($content_path = '') {
   return $config;
 }
 
+function get_migrations_from_yamls() {
+  $migrations = &drupal_static(__FUNCTION__);
+  if (!isset($migrations)) {
+    $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
+    $config = migrate_default_content_get_config_files($content_path);
+    foreach ($config as $data) {
+      $migrations[$data['name']] = array(
+        'class_name' => $data['class'],
+        'group_name' => 'migrate_default_content',
+        'disable_hooks' => isset($data['disable_hooks']) ? $data['disable_hooks'] : array(),
+        'source_file' => $data['data_file'],
+        'source_path' => $content_path . '/data',
+      );
+    }
+  }
+  return $migrations;
+}
+
 /**
  * Implements hook_migrate_api().
  */
 function migrate_default_content_migrate_api() {
-  // Get the list of migrations defined by our module,
-  // populate an array to return it with migrate_api array response.
-  $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
-  $config = migrate_default_content_get_config_files($content_path);
-  $migrations = array();
-  foreach ($config as $data) {
-    $migrations[$data['name']] = array(
-      'class_name' => $data['class'],
-      'group_name' => 'migrate_default_content',
-      'disable_hooks' => isset($data['disable_hooks']) ? $data['disable_hooks'] : array(),
-      'source_file' => $data['data_file'],
-      'source_path' => $content_path . '/data',
-    );
-  }
-
   $api = array(
     'api' => 2,
     'groups' => array(
@@ -89,7 +92,7 @@ function migrate_default_content_migrate_api() {
         'title' => t('Migrate default content'),
       ),
     ),
-    'migrations' => $migrations,
+    'migrations' => get_migrations_from_yamls(),
   );
 
   return $api;
@@ -99,23 +102,7 @@ function migrate_default_content_migrate_api() {
  * Implements hook_flush_caches().
  */
 function migrate_default_content_flush_caches() {
-  $active_migrations = migrate_migrations();
-  $defined_migrations = module_invoke('migrate_default_content', 'migrate_api');
-  foreach ($active_migrations as $machine_name => $current_migration) {
-    $group = $current_migration->getGroup();
-    if (!empty($group)) {
-      $group_name = $group->getName();
-    }
-    if ($group_name == 'migrate_default_content') {
-      // If current migration is not defined by migrate_default_content hook_migrate_api,
-      if (!array_key_exists($machine_name, $defined_migrations['migrations'])) {
-        // its yaml has been deleted, deregister it.
-        Migration::deregisterMigration($machine_name);
-        // and delete it from the list of migrations to be registered.
-        unset($defined_migrations[$machine_name]);
-      }
-    }
-  }
+  $defined_migrations = get_migrations_from_yamls();
   // Register defined migrations.
   if (!empty($defined_migrations['migrations'])) {
     migrate_static_registration(array_keys($defined_migrations['migrations']));
