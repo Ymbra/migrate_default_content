@@ -104,8 +104,8 @@ function migrate_default_content_migrate_api() {
 function migrate_default_content_flush_caches() {
   $defined_migrations = migrate_default_content_fetch_migrations();
   // Register defined migrations.
-  if (!empty($defined_migrations['migrations'])) {
-    migrate_static_registration(array_keys($defined_migrations['migrations']));
+  if (!empty($defined_migrations)) {
+    migrate_static_registration(array_keys($defined_migrations));
   }
 }
 
