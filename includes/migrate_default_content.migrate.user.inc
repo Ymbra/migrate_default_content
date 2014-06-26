@@ -17,12 +17,12 @@ class defaultUser extends defaultEntity {
       }
       $current_row->roles = $role_ids;
     }
+    
+    // Handle passwords.
+    if (!empty($current_row->pass)) {
+      require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'includes/password.inc');
+      $current_row->pass = user_hash_password($current_row->pass);
+    }  
   }
   
-  // Handle passwords.
-  if (!empty($current_row->pass)) {
-    require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'includes/password.inc');
-    $current_row->pass = user_hash_password($current_row->pass);
-  }  
-
 }
