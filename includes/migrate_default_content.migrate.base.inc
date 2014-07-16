@@ -84,7 +84,7 @@ abstract class defaultBaseMigration extends Migration {
     }
   }
 
-  private function preprocessMapping($key, $value) {
+  protected function preprocessMapping($key, $value) {
     if (!is_array($value)) {
       return;
     }
