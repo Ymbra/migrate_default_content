@@ -120,7 +120,9 @@ abstract class defaultBaseMigration extends Migration {
       if (empty($migrate) || !$migrate instanceof MigrateFieldMapping) {
         $migrate = $this->addFieldMapping($key, $key, FALSE);
       }
-      $migrate->sourceMigration(array($value['source_migration']));
+      $separator = !empty($value['separator']) ? $value['separator'] : '|';
+      $source_migration = explode($separator, $value['source_migration']);
+      $migrate->sourceMigration($source_migration);
     }
   }
 
