@@ -106,6 +106,15 @@ abstract class defaultBaseMigration extends Migration {
       $migrate->separator($value['separator']);
     }
 
+    if (!empty($value['source_migration'])) {
+      if (empty($migrate) || !$migrate instanceof MigrateFieldMapping) {
+        $migrate = $this->addFieldMapping($key, $key, FALSE);
+      }
+      $separator = !empty($value['separator']) ? $value['separator'] : '|';
+      $source_migration = explode($separator, $value['source_migration']);
+      $migrate->sourceMigration($source_migration);
+    }
+
     if (!empty($value['components']) && is_array($value['components'])) {
       foreach ($value['components'] as $name => $component) {
         if ($name == 'source_dir') {
@@ -114,15 +123,6 @@ abstract class defaultBaseMigration extends Migration {
         $migrate = $this->addFieldMapping($key . ':' . $name);
         $migrate->defaultValue($component);
       }
-    }
-
-    if (!empty($value['source_migration'])) {
-      if (empty($migrate) || !$migrate instanceof MigrateFieldMapping) {
-        $migrate = $this->addFieldMapping($key, $key, FALSE);
-      }
-      $separator = !empty($value['separator']) ? $value['separator'] : '|';
-      $source_migration = explode($separator, $value['source_migration']);
-      $migrate->sourceMigration($source_migration);
     }
   }
 
