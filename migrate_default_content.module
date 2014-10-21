@@ -51,18 +51,24 @@ function migrate_default_content_requirements($phase) {
 function migrate_default_content_get_config_files($content_path = '') {
   $config = &drupal_static(__FUNCTION__, array());
   if (empty($config)) {
-    libraries_load('spyc');
-    if (empty($content_path)) {
-      $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
-    }
-    $files = file_scan_directory($content_path, '/^.+\.yaml/');
-    foreach ($files as $file) {
-      $config[] = Spyc::YAMLLoad($file->uri);
+    if (libraries_load('spyc')) {
+      if (empty($content_path)) {
+        $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
+      }
+      $files = file_scan_directory($content_path, '/^.+\.yaml/');
+      foreach ($files as $file) {
+        $config[] = Spyc::YAMLLoad($file->uri);
+      }
     }
   }
   return $config;
 }
 
+/**
+ * Fetches the migration files and returns its information.
+ * 
+ * @return array
+ */
 function migrate_default_content_fetch_migrations() {
   $migrations = &drupal_static(__FUNCTION__);
   if (!isset($migrations)) {
@@ -110,9 +116,10 @@ function migrate_default_content_flush_caches() {
 }
 
 /**
- * Implements hook_entity_presave.
+ * Implements hook_entity_presave().
+ * 
  * Workaround for a bug when saving taxonomy_term entities:
- *  In taxonomy_term_save $term->vocabulary_machine_name is not converted to vid.
+ * In taxonomy_term_save $term->vocabulary_machine_name is not converted to vid.
  */
 function migrate_default_content_entity_presave($entity, $type) {
   if ($type == "taxonomy_term" && empty($entity->vid) && $entity->vocabulary_machine_name) {
