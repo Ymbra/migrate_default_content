@@ -66,7 +66,7 @@ function migrate_default_content_get_config_files($content_path = '') {
 
 /**
  * Fetches the migration files and returns its information.
- * 
+ *
  * @return array
  */
 function migrate_default_content_fetch_migrations() {
@@ -117,13 +117,16 @@ function migrate_default_content_flush_caches() {
 
 /**
  * Implements hook_entity_presave().
- * 
- * Workaround for a bug when saving taxonomy_term entities:
- * In taxonomy_term_save $term->vocabulary_machine_name is not converted to vid.
  */
 function migrate_default_content_entity_presave($entity, $type) {
-  if ($type == "taxonomy_term" && empty($entity->vid) && $entity->vocabulary_machine_name) {
-    // loads taxonomy vocabulary and assigns its vid to the taxonomy term.
+  // Transform machine name to vid on taxonomy_term_save().
+  if ($type == 'taxonomy_term' && empty($entity->vid) && $entity->vocabulary_machine_name) {
+    // Loads taxonomy vocabulary and assigns its vid to the taxonomy term.
     $entity->vid = taxonomy_vocabulary_machine_name_load($entity->vocabulary_machine_name)->vid;
+  }
+
+  // Support entity registration.
+  if ($type == 'registration' && isset($entity->entity)) {
+    $entity->entity_id = $entity->entity['destid1'];
   }
 }
