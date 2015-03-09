@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Provides functionality for migration default content.
+ */
 
 /**
  * Implements hook_libraries_info().
@@ -44,9 +48,10 @@ function migrate_default_content_requirements($phase) {
  * Returns an array with all the configuration saved into the yaml files.
  *
  * @param string $content_path
- *  Internal path where the yaml and data files are stored.
+ *   Internal path where the yaml and data files are stored.
  *
- * @return array
+ * @return array $config
+ *   Configuration from the yaml in an array.
  */
 function migrate_default_content_get_config_files($content_path = '') {
   $config = &drupal_static(__FUNCTION__, array());
@@ -55,7 +60,7 @@ function migrate_default_content_get_config_files($content_path = '') {
       if (empty($content_path)) {
         $content_path = variable_get('migrate_default_content_path', 'sites/default/files/default_content');
       }
-      $files = file_scan_directory($content_path, '/^.+\.yaml/');
+      $files = file_scan_directory($content_path, '/^.+\.(yaml|yml)/');
       foreach ($files as $file) {
         $config[] = Spyc::YAMLLoad($file->uri);
       }
@@ -67,7 +72,8 @@ function migrate_default_content_get_config_files($content_path = '') {
 /**
  * Fetches the migration files and returns its information.
  *
- * @return array
+ * @return array $migrations
+ *   Data structure with all its information.
  */
 function migrate_default_content_fetch_migrations() {
   $migrations = &drupal_static(__FUNCTION__);
