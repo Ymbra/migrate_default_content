@@ -125,14 +125,22 @@ function migrate_default_content_flush_caches() {
  * Implements hook_entity_presave().
  */
 function migrate_default_content_entity_presave($entity, $type) {
-  // Transform machine name to vid on taxonomy_term_save().
-  if ($type == 'taxonomy_term' && empty($entity->vid) && $entity->vocabulary_machine_name) {
-    // Loads taxonomy vocabulary and assigns its vid to the taxonomy term.
-    $entity->vid = taxonomy_vocabulary_machine_name_load($entity->vocabulary_machine_name)->vid;
-  }
-
   // Support entity registration.
   if ($type == 'registration' && isset($entity->entity)) {
     $entity->entity_id = $entity->entity['destid1'];
+  }
+}
+
+/**
+ * Implements hook_taxonomy_term_presave().
+ *
+ * Conflicts with i18n_taxonomy and it's hook_taxonomy_term_presave
+ * but since that module has a heavier weight it will have a vid.
+ */
+function migrate_default_content_taxonomy_term_presave($term) {
+  // Transform machine name to vid on taxonomy_term_save().
+  if (empty($term->vid) && $term->vocabulary_machine_name) {
+    // Loads taxonomy vocabulary and assigns its vid to the taxonomy term.
+    $term->vid = taxonomy_vocabulary_machine_name_load($term->vocabulary_machine_name)->vid;
   }
 }
