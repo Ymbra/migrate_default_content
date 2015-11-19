@@ -8,6 +8,7 @@ dependencies[] = migrate_extras
 dependencies[] = libraries
 
 files[] = 'includes/migrate_default_content.migrate.base.inc'
+files[] = 'includes/migrate_default_content.migrate.comment.inc'
 files[] = 'includes/migrate_default_content.migrate.entity.inc'
 files[] = 'includes/migrate_default_content.migrate.file.inc'
 files[] = 'includes/migrate_default_content.migrate.field_collection.inc'
