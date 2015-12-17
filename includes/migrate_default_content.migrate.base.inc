@@ -68,7 +68,13 @@ abstract class defaultBaseMigration extends Migration {
     // Rebuild the csv columns array.
     $this->csvColumns = array_merge($csv_cols, $this->csvColumns);
 
-    return new MigrateSourceCSV($this->arguments['source_path'] . '/' . $this->arguments['source_file'], $this->csvColumns, array('header_rows' => 1));
+    // Merge default options with other specified in config files.
+    $options = array('header_rows' => 1);
+    if ($this->migrationData['options']) {
+      $options = array_merge($options, $this->migrationData['options'][0]);
+    }
+    return new MigrateSourceCSV($this->arguments['source_path'] . '/' . $this->arguments['source_file'], $this->csvColumns, $options);
+
   }
 
   protected function addDefaultMappings() {

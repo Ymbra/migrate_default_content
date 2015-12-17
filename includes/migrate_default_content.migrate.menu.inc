@@ -48,11 +48,16 @@ class defaultMenu extends defaultBaseMigration {
 
   /**
    * Implements MigrateDestination::prepare().
-   * Adds default weight for menu item if there isn't any.
+   * Adds default weight for menu item if there isn't any and decode JSON
+   * options.
    */
   public function prepareRow($row) {
     if (empty($row->weight)) {
       $row->weight = 0;
+    }
+    if (!empty($row->options)) {
+      $options = drupal_json_decode($row->options);
+      $row->options = $options;
     }
   }
 }
