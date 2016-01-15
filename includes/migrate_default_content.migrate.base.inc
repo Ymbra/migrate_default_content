@@ -70,7 +70,7 @@ abstract class defaultBaseMigration extends Migration {
 
     // Merge default options with other specified in config files.
     $options = array('header_rows' => 1);
-    if ($this->migrationData['options']) {
+    if (array_key_exists('options', $this->migrationData)) {
       $options = array_merge($options, $this->migrationData['options'][0]);
     }
     return new MigrateSourceCSV($this->arguments['source_path'] . '/' . $this->arguments['source_file'], $this->csvColumns, $options);
