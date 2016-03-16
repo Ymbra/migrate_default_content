@@ -5,6 +5,8 @@ entity_type: node
 bundle: article
 data_origin: csv
 data_file: articles.csv
+dependencies:
+  users
 fields:
   - title:
       source: Title
@@ -18,6 +20,10 @@ fields:
       components:
         file_replace: 1 #FILE_EXISTS_REPLACE
         source_dir: "images"
+  - field_real_author:
+      source: RealAuthors
+      separator: '|'
+      source_migration: users
   - author:
       source:
       default_value: 1
