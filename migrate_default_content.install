@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for migrate_default_content.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function migrate_default_content_uninstall() {
+  // For some unknown reason the configuration is not deleted using
+  // dependencies.
+  Drupal::configFactory()->getEditable('migrate.migration_group.migrate_default_content')->delete();
+}

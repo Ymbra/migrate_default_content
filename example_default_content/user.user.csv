@@ -1,0 +1,4 @@
+name,pass,mail,status,roles
+demo,demo,demo@demo.com,1,administrator
+demo2,demo2,demo2@demo.com,1,"[\"administrator\",\"editor\"]"
+magic,pass,magic@magic.com,,

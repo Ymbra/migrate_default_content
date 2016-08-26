@@ -1,0 +1,54 @@
+Provide default test content for a Drupal site using migrate.
+
+This module use csv as a data source.
+This csv are located in a folder specified by a setting called source_dir.
+The name of the csv follows a standard: ENTITY_TYPE.BUNDLE.csv
+like user.user.csv or node.article.csv
+
+You can find examples for most entity types in the
+example_default_content folder.
+
+Any field with the password data type will be hashed automatically.
+
+Entity reference configurable fields and base fields will try to add
+dependencies automatically from other csv present.
+For example, if you have a user migration the author of you nodes
+will be lookep up in the user migration.
+The first column of any csv will be used as the identifier for that
+migration.
+
+Menu link content
+
+Since this entity type has hierarchy you might want to specify
+a uuid so you can set parents like this:
+
+title,link,menu_name,weight,parent,uuid
+Admin,internal:/admin,main,0,,9250aef9-a7b9-43f1-ae49-4e872bcceb7f
+Extend,internal:/admin/modules,main,0,menu_link_content:9250aef9-a7b9-43f1-ae49-4e872bcceb7f
+
+TODO: be ablo to set a menu item for an entity (e.g. a node) like
+entity:node/76
+but using an id that is not changing like the uuid
+Meanwhile you can set path for you nodes an internal links to it like
+internal:/about-us
+
+
+Multivalue fields
+
+Use a escaped JSON array like this:
+demo2,demo2,demo2@demo.com,1,"[\"administrator\",\"editor\"]"
+
+Multicomponent fields
+
+Some fields such as text_with_summary have many components:
+value, format and summary for this specific field.
+You can map them in your CSV header as "body" and the text will be migrated.
+However if you want different values for the different subcomponents
+they have to be specified in the CSV value as a escaped JSON array like this:
+
+Hello page 2,demo,"{\"value\":\"<p>ffff<\/p>\"\,\"format\":\"full_html\",\"summary\":\"xxxxx\"}"
+
+You will have to specify all of the subfields due to this bugs:
+https://www.drupal.org/node/2639556
+https://www.drupal.org/node/2632814
+so just "value" and "format" is not enough

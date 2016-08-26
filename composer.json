@@ -1,0 +1,19 @@
+{
+  "name": "drupal/migrate_default_content",
+  "type": "drupal-module",
+  "description": "Provides dummy content",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://github.com/ymbra/migrate_default_content",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://github.com/ymbra/migrate_default_content/issues",
+    "source": "https://github.com/ymbra/migrate_default_content"
+  },
+  "require": {
+    "drupal/migrate_plus": "~8.0",
+    "drupal/migrate_tools": "~8.0",
+    "drupal/migrate_source_csv": "~8.0"
+  },
+  "version": "8.x-1.0-beta1"
+}
