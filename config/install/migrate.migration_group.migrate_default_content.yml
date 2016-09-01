@@ -1,9 +1,0 @@
-id: migrate_default_content
-label: migrate default content
-# Required to cleanup CMI.
-dependencies:
-  module:
-    - migrate_default_content
-  enforced:
-    module:
-      - migrate_default_content
