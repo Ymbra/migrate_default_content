@@ -41,11 +41,19 @@ class MigrateEvent implements EventSubscriberInterface {
       // Get the destination entity type.
       $destination_plugin = $migration->getDestinationConfiguration()['plugin'];
       $entity_type = explode(':', $destination_plugin)[1];
+
+      $bundle_key = \Drupal::service('entity_type.manager')->getDefinition($entity_type)->getKey('bundle');
+
       // Get the bundle.
-      foreach ($migration->getProcess()['type'] as $plugin) {
-        if ($plugin['plugin'] === 'default_value') {
-          $bundle = $plugin['default_value'];
+      if ($bundle_key) {
+        foreach ($migration->getProcess()[$bundle_key] as $plugin) {
+          if ($plugin['plugin'] === 'default_value') {
+            $bundle = $plugin['default_value'];
+          }
         }
+      }
+      else {
+        $bundle = $entity_type;
       }
 
       $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $bundle);

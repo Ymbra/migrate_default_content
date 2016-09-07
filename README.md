@@ -17,6 +17,18 @@ will be lookep up in the user migration.
 The first column of any csv will be used as the identifier for that
 migration.
 
+Files
+
+If there's a "files" directory inside your source directory, for example:
+/default/content/files
+A migration for those files will be automatically created and files can
+be referenced by their file name in the following way:
+
+title,uid,body,field_image
+Hello article,demo,Body,magic.png
+
+Be sure you have a macig.png file in your "files" folder.
+
 Menu link content
 
 Since this entity type has hierarchy you might want to specify
@@ -26,7 +38,7 @@ title,link,menu_name,weight,parent,uuid
 Admin,internal:/admin,main,0,,9250aef9-a7b9-43f1-ae49-4e872bcceb7f
 Extend,internal:/admin/modules,main,0,menu_link_content:9250aef9-a7b9-43f1-ae49-4e872bcceb7f
 
-TODO: be ablo to set a menu item for an entity (e.g. a node) like
+TODO: be able to set a menu item for an entity (e.g. a node) like
 entity:node/76
 but using an id that is not changing like the uuid
 Meanwhile you can set path for you nodes an internal links to it like

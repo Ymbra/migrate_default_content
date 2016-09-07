@@ -17,7 +17,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
   // First we create a structure with all the migrations because we want to know
   // which ones are available and set dependencies.
-  $migration_files = [];
+  $migrations = [];
   if ($handle = opendir($source_dir)) {
     while (($file = readdir($handle)) !== FALSE) {
       $fileparts = explode('.', $file);
@@ -28,7 +28,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         $csv = fopen($source_dir . '/' . $file, 'r');
         $line = fgets($csv);
         fclose($csv);
-        $migration_files['migrate_default_content_' . $entity_type . '_' . $bundle] = [
+        $migrations['migrate_default_content_' . $entity_type . '_' . $bundle] = [
           'first_line' => $line,
           'entity_type' => $entity_type,
           'bundle' => $bundle,
@@ -36,90 +36,159 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       }
     }
     closedir($handle);
+  }
+  // Add files migration.
+  if ($handle = opendir($source_dir . '/files')) {
+    $data_rows = [];
+    while (($file = readdir($handle)) !== FALSE) {
+      if ($file != "." && $file != "..") {
+        $data_rows[] = ['filename' => $file];
+      }
+    }
+    $migrations['migrate_default_content_file'] = [
+      'data_rows' => $data_rows,
+    ];
+    closedir($handle);
+  }
 
-    foreach ($migration_files as $id => $migration) {
-      $headers = explode(',', $migration['first_line']);
-      // Assume the key is the first field of the csv.
-      $key = trim(reset($headers));
-      $migration_plugin = [
-        'id' => $id,
-        'migration_group' => 'migrate_default_content',
-        'label' => $id,
-        'class' => '\Drupal\migrate\Plugin\Migration',
-        'status' => 1,
-        'source' => [
-          'plugin' => 'csv',
-          'path' => $source_dir . '/' . $migration['entity_type'] . '.' . $migration['bundle'] . '.csv',
-          'header_row_count' => 1,
-          'keys' =>
-          [
-            0 => $key,
-          ],
+  foreach ($migrations as $id => $migration) {
+    if ($id === 'migrate_default_content_file') {
+      continue;
+    }
+    $headers = explode(',', $migration['first_line']);
+    // Assume the key is the first field of the csv.
+    $key = trim(reset($headers));
+
+    $migration_plugin = [
+      'id' => $id,
+      'migration_group' => 'migrate_default_content',
+      'label' => $id,
+      'class' => '\Drupal\migrate\Plugin\Migration',
+      'status' => 1,
+      'source' => [
+        'plugin' => 'csv',
+        'path' => $source_dir . '/' . $migration['entity_type'] . '.' . $migration['bundle'] . '.csv',
+        'header_row_count' => 1,
+        'keys' =>
+        [
+          0 => $key,
         ],
-        'process' => [
-          'type' => [
-            'plugin' => 'default_value',
-            'default_value' => $migration['bundle'],
-          ],
-        ],
-        'destination' => [
-          'plugin' => 'entity:' . $migration['entity_type'],
+      ],
+      'destination' => [
+        'plugin' => 'entity:' . $migration['entity_type'],
+      ],
+    ];
+
+    // Get bundle info.
+    $bundle_key = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('bundle');
+
+    if ($bundle_key) {
+      $migration_plugin['process'][$bundle_key] = [
+        'plugin' => 'default_value',
+        'default_value' => $migration['bundle'],
+      ];
+    }
+    foreach ($headers as $field) {
+      // Headers can have spaces or line endings as is the case for the last
+      // field.
+      $field = trim($field);
+      // Handle CSV header fieldSubfield e.g. "bodyFormat".
+      $components = preg_split('/([A-Z])/', $field, -1, PREG_SPLIT_DELIM_CAPTURE);
+      $field = array_shift($components);
+      $subfield = strtolower(implode($components));
+
+      $dest_field = empty($subfield) ? $field : $field . '/' . $subfield;
+
+      // It needs to be a normalized process.
+      // See: https://api.drupal.org/api/drupal/core!modules!migrate!src!Plugin!Migration.php/function/Migration%3A%3AgetProcessNormalized/
+      $migration_plugin['process'][$dest_field] = [
+        [
+          'plugin' => 'get',
+          'source' => $field . ucfirst($subfield),
         ],
       ];
-      foreach ($headers as $field) {
-        // Headers can have spaces or line endings as is the case for the last
-        // field.
-        $field = trim($field);
-        // Handle CSV header fieldSubfield e.g. "bodyFormat".
-        $components = preg_split('/([A-Z])/', $field, -1, PREG_SPLIT_DELIM_CAPTURE);
-        $field = array_shift($components);
-        $subfield = strtolower(implode($components));
 
-        $dest_field = empty($subfield) ? $field : $field . '/' . $subfield;
+      // If this an entity_reference field and a migrate_default_content
+      // migration exists add it automatically.
+      $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration['entity_type'], $migration['bundle'])[$field];
+      // Handle special field types.
+      if ($field_definition) {
+        switch ($field_definition->getType()) {
+          case 'entity_reference':
+            $settings = $field_definition->getItemDefinition()->getSettings();
+            $target_entity_type = $settings['target_type'];
 
-        // It needs to be a normalized process.
-        // See: https://api.drupal.org/api/drupal/core!modules!migrate!src!Plugin!Migration.php/function/Migration%3A%3AgetProcessNormalized/
-        $migration_plugin['process'][$dest_field] = [
-          [
-            // All fields by default can have multiple values.
-            //'plugin' => 'explode',
-            'plugin' => 'get',
-            'source' => $field . ucfirst($subfield),
-          ],
-        ];
-
-        // If this an entity_reference field and a migrate_default_content
-        // migration exists add it automatically.
-        $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration['entity_type'], $migration['bundle'])[$field];
-        if ($field_definition && $field_definition->getType() === 'entity_reference') {
-          $settings = $field_definition->getItemDefinition()->getSettings();
-          $target_entity_type = $settings['target_type'];
-
-          if (isset($settings['handler_settings']['target_bundles'])) {
-            // Add all posible referenceable bundles.
-            foreach ($settings['handler_settings']['target_bundles'] as $target_bundle) {
-              $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
-              $migration_plugin = migrate_default_content_add_target_migration($migration_files, $migration_plugin, $dest_field, $target_id);
+            if (isset($settings['handler_settings']['target_bundles'])) {
+              // Add all posible referenceable bundles.
+              foreach ($settings['handler_settings']['target_bundles'] as $target_bundle) {
+                $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
+                $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+              }
             }
-          }
-          // Assume is a entity with only one bundle. e.g. user.
-          else {
-            $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
-            $migration_plugin = migrate_default_content_add_target_migration($migration_files, $migration_plugin, $dest_field, $target_id);
-          }
+            // Assume is a entity with only one bundle. e.g. user.
+            else {
+              $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
+              $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+            }
 
+            break;
+
+          case 'file':
+          case 'image':
+            $target_id = 'migrate_default_content_file';
+            $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+
+            break;
+
+          default:
+            break;
         }
       }
-
-      // Look for a overide yml file.
-      $override_file_path = $source_dir . '/overrides/' . $migration['entity_type'] . '.' . $migration['bundle'] . '.yml';
-      if (file_exists($override_file_path)) {
-        $yaml = new Parser();
-        $override = $yaml->parse(file_get_contents($override_file_path));
-        $migration_plugin = array_merge_recursive($migration_plugin, $override);
-      }
-      $definitions[$id] = $migration_plugin;
     }
+
+    // Look up for an override yml file.
+    $override_file_path = $source_dir . '/overrides/' . $migration['entity_type'] . '.' . $migration['bundle'] . '.yml';
+    if (file_exists($override_file_path)) {
+      $yaml = new Parser();
+      $override = $yaml->parse(file_get_contents($override_file_path));
+      $migration_plugin = array_merge_recursive($migration_plugin, $override);
+    }
+    $definitions[$id] = $migration_plugin;
+  }
+  if (isset($migrations['migrate_default_content_file'])) {
+    $definitions['migrate_default_content_file'] = [
+      'id' => 'migrate_default_content_file',
+      'migration_group' => 'migrate_default_content',
+      'label' => 'migrate_default_content_file',
+      'class' => '\Drupal\migrate\Plugin\Migration',
+      'status' => 1,
+      'source' => [
+        'plugin' => 'embedded_data',
+        'ids' => ['filename' => ['type' => 'string']],
+        'data_rows' => $migrations['migrate_default_content_file']['data_rows'],
+        'constants' => [
+          'destination_base_uri' => 'public://migrate_default_content_files/',
+        ],
+      ],
+      'process' => [
+        'filename' => [
+          'plugin' => 'get',
+          'source' => 'filename',
+        ],
+        'uri' => [
+          'plugin' => 'concat',
+          'source' => [
+            'constants/destination_base_uri',
+            'filename',
+          ],
+        ],
+      ],
+      'destination' => [
+        'plugin' => 'entity:file',
+        'source_path_property' => 'filename',
+        'source_base_path' => $source_dir . '/files/',
+      ],
+    ];
   }
 }
 
