@@ -55,12 +55,17 @@ Multicomponent fields
 Some fields such as text_with_summary have many components:
 value, format and summary for this specific field.
 You can map them in your CSV header as "body" and the text will be migrated.
+
 However if you want different values for the different subcomponents
-they have to be specified in the CSV value as a escaped JSON array like this:
+they have to be specified in the CSV header file by capitalizing the
+Subcomponent like this:
+title,uid,bodyValue,bodyFormat,bodySummary,field_imageTarget_id,field_imageAlt,field_related
+
+You can also use a escaped JSON array like this for "body" instead of changing the headers:
 
 Hello page 2,demo,"{\"value\":\"<p>ffff<\/p>\"\,\"format\":\"full_html\",\"summary\":\"xxxxx\"}"
 
-You will have to specify all of the subfields due to this bugs:
+You will have to specify all of the subfields on the JSON due to this bugs:
 https://www.drupal.org/node/2639556
 https://www.drupal.org/node/2632814
 so just "value" and "format" is not enough

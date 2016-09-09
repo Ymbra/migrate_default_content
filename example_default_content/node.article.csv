@@ -1,2 +1,2 @@
-title,uid,body,field_image,field_related
-Hello article,demo,Body,magic.png,"[\"Hello page\",\"Hello page 2\"]"
+title,uid,bodyValue,bodyFormat,bodySummary,field_imageTarget_id,field_imageAlt,field_related
+Hello article,demo,Body,full_html,Summary,magic.png,Alt text,"[\"Hello page\",\"Hello page 2\"]"

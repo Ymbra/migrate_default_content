@@ -38,7 +38,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     closedir($handle);
   }
   // Add files migration.
-  if ($handle = opendir($source_dir . '/files')) {
+  if (file_exists($source_dir . '/files') && $handle = opendir($source_dir . '/files')) {
     $data_rows = [];
     while (($file = readdir($handle)) !== FALSE) {
       if ($file != "." && $file != "..") {
@@ -197,6 +197,10 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
  */
 function migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id) {
   if (isset($migrations[$target_id])) {
+    $dest_subfield = explode('/', $dest_field);
+    if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id') {
+      return $migration_plugin;
+    }
     // We don't need a source because only the first process plugin in
     // the pipeline should have it and we already have the explode plugin.
     $migration_plugin['process'][$dest_field][] = [
@@ -204,7 +208,10 @@ function migrate_default_content_add_target_migration($migrations, $migration_pl
       'migration' => $target_id,
       'no_stub' => TRUE,
     ];
-    $migration_plugin['migration_dependencies']['required'][] = $target_id;
+    // Avoid dependencies on itself.
+    if ($target_id != $migration_plugin['id']) {
+      $migration_plugin['migration_dependencies']['required'][] = $target_id;
+    }
   }
   return $migration_plugin;
 }
