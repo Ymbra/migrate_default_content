@@ -167,6 +167,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         'ids' => ['filename' => ['type' => 'string']],
         'data_rows' => $migrations['migrate_default_content_file']['data_rows'],
         'constants' => [
+          'source_base_path' => $source_dir . '/files/',
           'destination_base_uri' => 'public://migrate_default_content_files/',
         ],
       ],
@@ -175,18 +176,30 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
           'plugin' => 'get',
           'source' => 'filename',
         ],
-        'uri' => [
+        'destination_full_uri' => [
           'plugin' => 'concat',
           'source' => [
             'constants/destination_base_uri',
             'filename',
           ],
         ],
+        'source_full_path' => [
+          'plugin' => 'concat',
+          'source' => [
+            'constants/source_base_path',
+            'filename',
+          ],
+        ],
+        'uri' => [
+          'plugin' => 'file_copy',
+          'source' => [
+            '@source_full_path',
+            '@destination_full_uri',
+          ],
+        ],
       ],
       'destination' => [
         'plugin' => 'entity:file',
-        'source_path_property' => 'filename',
-        'source_base_path' => $source_dir . '/files/',
       ],
     ];
   }
