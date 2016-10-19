@@ -21,18 +21,34 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
   if ($handle = opendir($source_dir)) {
     while (($file = readdir($handle)) !== FALSE) {
       $fileparts = explode('.', $file);
-      if ($file != "." && $file != ".." && array_pop($fileparts) == 'csv') {
-        $entity_type = array_shift($fileparts);
-        $bundle = array_shift($fileparts);
-        // Read first line of the file to get the fields to be migrated.
-        $csv = fopen($source_dir . '/' . $file, 'r');
-        $line = fgets($csv);
-        fclose($csv);
+      if ($file != "." && $file != "..") {
+        $entity_type = $fileparts[0];
+        $bundle = $fileparts[1];
+        
+        switch ($fileparts[2]) {            
+            case 'csv':
+                // Read first line of the file to get the fields to be migrated.
+                $csv = fopen($source_dir . '/' . $file, 'r');
+                $line = explode(',', fgets($csv));
+                fclose($csv);
+                $type = 'csv';
+                break;                
+            case 'yml':
+                $parser = new Parser();
+                $data = $parser->parse(file_get_contents($source_dir . '/' . $file));
+                $line = array_keys($data[0]);
+                $type = 'yaml';
+                break; 
+            default:
+                continue 2;
+        }
         $migrations['migrate_default_content_' . $entity_type . '_' . $bundle] = [
           'first_line' => $line,
           'entity_type' => $entity_type,
           'bundle' => $bundle,
-        ];
+          'type'=>$type,
+          'filename'=>$file
+        ];        
       }
     }
     closedir($handle);
@@ -55,7 +71,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     if ($id === 'migrate_default_content_file') {
       continue;
     }
-    $headers = explode(',', $migration['first_line']);
+    $headers = $migration['first_line'];
     // Assume the key is the first field of the csv.
     $key = trim(reset($headers));
 
@@ -66,18 +82,17 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       'class' => '\Drupal\migrate\Plugin\Migration',
       'status' => 1,
       'source' => [
-        'plugin' => 'csv',
-        'path' => $source_dir . '/' . $migration['entity_type'] . '.' . $migration['bundle'] . '.csv',
-        'header_row_count' => 1,
-        'keys' =>
-        [
-          0 => $key,
-        ],
+            'plugin' => $migration['type'],
+            'path' => $source_dir . '/' . $migration['filename'],
+            'header_row_count' => 1,
+            'keys' =>[ 
+                0 => $key                
+            ],
       ],
       'destination' => [
         'plugin' => 'entity:' . $migration['entity_type'],
       ],
-    ];
+    ];    
 
     // Get bundle info.
     $bundle_key = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('bundle');

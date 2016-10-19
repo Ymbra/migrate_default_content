@@ -1,0 +1,12 @@
+-
+  title: Hello article
+  uid: demo
+  bodyValue: DATEST
+  bodyFormat: full_html
+  bodySummary: Summary
+  field_imageTarget_id: magic.png
+  field_imageAlt: Alt text
+  field_related:
+    - Hello page
+    - Hello page 2
+
