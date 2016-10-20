@@ -5,6 +5,7 @@ namespace Drupal\migrate_default_content\Plugin\migrate\source;
 use Drupal\migrate\MigrateException;
 use Drupal\migrate\Plugin\migrate\source\SourcePluginBase;
 use Drupal\migrate\Plugin\MigrationInterface;
+use Symfony\Component\Yaml\Parser;
 
 /**
  * Source for YAML.
@@ -41,7 +42,7 @@ class YAML extends SourcePluginBase {
    * @var string
    */
   protected $fileClass = '';
-  
+
   /**
    * The human-readable column headers, keyed by column index in the CSV.
    *
@@ -71,8 +72,6 @@ class YAML extends SourcePluginBase {
     if (empty($this->configuration['keys'])) {
       throw new MigrateException('You must declare "keys" as a unique array of fields in your source settings.');
     }
-
-//     $this->fileClass = empty($configuration['file_class']) ? 'Drupal\migrate_source_YAML\YAMLFileObject' : $configuration['file_class'];
   }
 
   /**
@@ -90,57 +89,24 @@ class YAML extends SourcePluginBase {
    */
   public function initializeIterator() {
 
-    $parser = new \Symfony\Component\Yaml\Parser();
+    $parser = new Parser();
     $ret = new \ArrayIterator(
         $parser->parse(file_get_contents($this->configuration['path']))
     );
-    
+
     if (empty($this->configuration['column_names'])) {
-        foreach (array_keys($ret->offsetGet(0)) as $header) {        
-            $header = trim($header);
-            $this->columnNames[] = [$header => $header];
-        }
-        $ret->rewind();
+      foreach (array_keys($ret->offsetGet(0)) as $header) {
+        $header = trim($header);
+        $this->columnNames[] = [$header => $header];
+      }
+      $ret->rewind();
     }
     else {
-    
-       $this->columnNames = $this->configuration['column_names'];
+
+      $this->columnNames = $this->configuration['column_names'];
     }
-    
+
     return $ret;
-    /*
-    // File handler using header-rows-respecting extension of SPLFileObject.
-    $this->file = new $this->fileClass($this->configuration['path']);
-
-    // Set basics of YAML behavior based on configuration.
-    $delimiter = !empty($this->configuration['delimiter']) ? $this->configuration['delimiter'] : ',';
-    $enclosure = !empty($this->configuration['enclosure']) ? $this->configuration['enclosure'] : '"';
-    $escape = !empty($this->configuration['escape']) ? $this->configuration['escape'] : '\\';
-    $this->file->setYAMLControl($delimiter, $enclosure, $escape);
-
-    // Figure out what YAML column(s) to use. Use either the header row(s) or
-    // explicitly provided column name(s).
-    if (!empty($this->configuration['header_row_count'])) {
-      $this->file->setHeaderRowCount($this->configuration['header_row_count']);
-
-      // Find the last header line.
-      $this->file->rewind();
-      $this->file->seek($this->file->getHeaderRowCount() - 1);
-
-      $row = $this->file->current();
-      foreach ($row as $header) {
-        $header = trim($header);
-        $column_names[] = [$header => $header];
-      }
-      $this->file->setColumnNames($column_names);
-    }
-    // An explicit list of column name(s) will override any header row(s).
-    if (!empty($this->configuration['column_names'])) {
-      $this->file->setColumnNames($this->configuration['column_names']);
-    }
-
-    return $this->file;
-    */
   }
 
   /**
