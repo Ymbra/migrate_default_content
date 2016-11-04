@@ -115,6 +115,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       if ($field_definition) {
         switch ($field_definition->getType()) {
           case 'entity_reference':
+          case 'entity_reference_revisions':
             $settings = $field_definition->getItemDefinition()->getSettings();
             $target_entity_type = $settings['target_type'];
 
