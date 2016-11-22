@@ -92,8 +92,10 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       // Headers can have spaces or line endings as is the case for the last
       // field.
       $field = trim($field);
+      // Extra config can be specified like field_name:bundle.
+      $extra = explode(':', $field);
       // Handle CSV header fieldSubfield e.g. "bodyFormat".
-      $components = preg_split('/([A-Z])/', $field, -1, PREG_SPLIT_DELIM_CAPTURE);
+      $components = preg_split('/([A-Z])/', array_shift($extra), -1, PREG_SPLIT_DELIM_CAPTURE);
       $field = array_shift($components);
       $subfield = strtolower(implode($components));
 
@@ -119,9 +121,14 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
             $settings = $field_definition->getItemDefinition()->getSettings();
             $target_entity_type = $settings['target_type'];
 
+            // In the case of an entity reference the extra configuration is
+            // the bundles it should reference.
             if (isset($settings['handler_settings']['target_bundles'])) {
+              $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
+            }
+            if (!empty($extra)) {
               // Add all posible referenceable bundles.
-              foreach ($settings['handler_settings']['target_bundles'] as $target_bundle) {
+              foreach ($extra as $target_bundle) {
                 $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
                 $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
               }

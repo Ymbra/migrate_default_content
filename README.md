@@ -1,3 +1,5 @@
+# Overview
+
 Provide default test content for a Drupal site using migrate.
 
 This module use csv as a data source.
@@ -10,6 +12,8 @@ example_default_content folder.
 
 Any field with the password data type will be hashed automatically.
 
+# Entity references
+
 Entity reference configurable fields and base fields will try to add
 dependencies automatically from other csv present.
 For example, if you have a user migration the author of you nodes
@@ -17,7 +21,13 @@ will be lookep up in the user migration.
 The first column of any csv will be used as the identifier for that
 migration.
 
-Files
+If a entity reference field is not able to determine the bundle it
+should reference you can specify it in the name of the field like thi
+
+title,uid,body,field_related:article
+Hello world,demo,Body,My article
+
+# Files
 
 If there's a "files" directory inside your source directory, for example:
 /default/content/files
@@ -27,9 +37,9 @@ be referenced by their file name in the following way:
 title,uid,body,field_image
 Hello article,demo,Body,magic.png
 
-Be sure you have a macig.png file in your "files" folder.
+Be sure you have a magic.png file in your "files" folder.
 
-Menu link content
+# Menu link content
 
 Since this entity type has hierarchy you might want to specify
 a uuid so you can set parents like this:
@@ -45,7 +55,7 @@ Meanwhile you can set path for you nodes an internal links to it like
 internal:/about-us
 
 
-Multivalue fields
+# Multivalue fields
 
 Use a escaped JSON array like this:
 demo2,demo2,demo2@demo.com,1,"[\"administrator\",\"editor\"]"
