@@ -106,7 +106,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       $migration_plugin['process'][$dest_field] = [
         [
           'plugin' => 'get',
-          'source' => $field . ucfirst($subfield),
+          'source' => $field . ucfirst($subfield) . (empty($extra) ? '' : ':' . implode(':', $extra)),
         ],
       ];
 
