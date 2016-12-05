@@ -34,8 +34,10 @@ If there's a "files" directory inside your source directory, for example:
 A migration for those files will be automatically created and files can
 be referenced by their file name in the following way:
 
+```
 title,uid,body,field_image
 Hello article,demo,Body,magic.png
+```
 
 Be sure you have a magic.png file in your "files" folder.
 
@@ -44,9 +46,11 @@ Be sure you have a magic.png file in your "files" folder.
 Since this entity type has hierarchy you might want to specify
 a uuid so you can set parents like this:
 
+```
 title,link,menu_name,weight,parent,uuid
 Admin,internal:/admin,main,0,,9250aef9-a7b9-43f1-ae49-4e872bcceb7f
 Extend,internal:/admin/modules,main,0,menu_link_content:9250aef9-a7b9-43f1-ae49-4e872bcceb7f
+```
 
 TODO: be able to set a menu item for an entity (e.g. a node) like
 entity:node/76
@@ -69,11 +73,15 @@ You can map them in your CSV header as "body" and the text will be migrated.
 However if you want different values for the different subcomponents
 they have to be specified in the CSV header file by capitalizing the
 Subcomponent like this:
+```
 title,uid,bodyValue,bodyFormat,bodySummary,field_imageTarget_id,field_imageAlt,field_related
+```
 
 You can also use a escaped JSON array like this for "body" instead of changing the headers:
 
+```
 Hello page 2,demo,"{\"value\":\"<p>ffff<\/p>\"\,\"format\":\"full_html\",\"summary\":\"xxxxx\"}"
+```
 
 You will have to specify all of the subfields on the JSON due to this bugs:
 https://www.drupal.org/node/2639556
