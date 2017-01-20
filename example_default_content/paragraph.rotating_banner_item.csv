@@ -1,0 +1,3 @@
+field_title,field_caption,field_imageTarget_id,field_imageAlt,parent_id,parent_type,parent_field_name
+Slide 1,Caption 1,demo.jpg,Demo,1,block_content,field_slide
+Slide 2,Caption 2,magic.png,Magic,1,block_content,field_slide

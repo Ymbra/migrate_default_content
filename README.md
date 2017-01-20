@@ -1,3 +1,5 @@
+# Overview
+
 Provide default test content for a Drupal site using migrate.
 
 This module use csv as a data source.
@@ -10,6 +12,8 @@ example_default_content folder.
 
 Any field with the password data type will be hashed automatically.
 
+# Entity references
+
 Entity reference configurable fields and base fields will try to add
 dependencies automatically from other csv present.
 For example, if you have a user migration the author of you nodes
@@ -17,26 +21,36 @@ will be lookep up in the user migration.
 The first column of any csv will be used as the identifier for that
 migration.
 
-Files
+If a entity reference field is not able to determine the bundle it
+should reference you can specify it in the name of the field like thi
+
+title,uid,body,field_related:article
+Hello world,demo,Body,My article
+
+# Files
 
 If there's a "files" directory inside your source directory, for example:
 /default/content/files
 A migration for those files will be automatically created and files can
 be referenced by their file name in the following way:
 
+```
 title,uid,body,field_image
 Hello article,demo,Body,magic.png
+```
 
-Be sure you have a macig.png file in your "files" folder.
+Be sure you have a magic.png file in your "files" folder.
 
-Menu link content
+# Menu link content
 
 Since this entity type has hierarchy you might want to specify
 a uuid so you can set parents like this:
 
+```
 title,link,menu_name,weight,parent,uuid
 Admin,internal:/admin,main,0,,9250aef9-a7b9-43f1-ae49-4e872bcceb7f
 Extend,internal:/admin/modules,main,0,menu_link_content:9250aef9-a7b9-43f1-ae49-4e872bcceb7f
+```
 
 TODO: be able to set a menu item for an entity (e.g. a node) like
 entity:node/76
@@ -45,7 +59,7 @@ Meanwhile you can set path for you nodes an internal links to it like
 internal:/about-us
 
 
-Multivalue fields
+# Multivalue fields
 
 Use a escaped JSON array like this:
 demo2,demo2,demo2@demo.com,1,"[\"administrator\",\"editor\"]"
@@ -59,11 +73,15 @@ You can map them in your CSV header as "body" and the text will be migrated.
 However if you want different values for the different subcomponents
 they have to be specified in the CSV header file by capitalizing the
 Subcomponent like this:
+```
 title,uid,bodyValue,bodyFormat,bodySummary,field_imageTarget_id,field_imageAlt,field_related
+```
 
 You can also use a escaped JSON array like this for "body" instead of changing the headers:
 
+```
 Hello page 2,demo,"{\"value\":\"<p>ffff<\/p>\"\,\"format\":\"full_html\",\"summary\":\"xxxxx\"}"
+```
 
 You will have to specify all of the subfields on the JSON due to this bugs:
 https://www.drupal.org/node/2639556
