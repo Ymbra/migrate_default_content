@@ -1,0 +1,19 @@
+- 
+    title: Hello page
+    uid: 1
+    body: LoremIps
+
+- 
+    title: Hello page 2
+    uid: 1
+    body: 
+        value: "<p>ffff</p>"
+        format: full_html
+        summary: xxxxx
+    
+- 
+    title: Hello page 3
+    uid: 1
+    body: 
+        - { value: "<p>ffff</p>", format: "full_html", summary: "xxxxx"}
+        - { value: "<p>Multi 2</p>", format: "full_html", summary: "summary 2"}
