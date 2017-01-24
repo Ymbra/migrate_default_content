@@ -2,10 +2,10 @@
 
 Provide default test content for a Drupal site using migrate.
 
-This module use csv as a data source.
-This csv are located in a folder specified by a setting called source_dir.
-The name of the csv follows a standard: ENTITY_TYPE.BUNDLE.csv
-like user.user.csv or node.article.csv
+This module uses csv or yaml files as a data source.
+These files are located in a folder specified by a setting called source_dir.
+The name of the files follows a standard: ENTITY_TYPE.BUNDLE.FILE_TYPE
+like user.user.csv or node.article.yml
 
 You can find examples for most entity types in the
 example_default_content folder.
@@ -15,14 +15,14 @@ Any field with the password data type will be hashed automatically.
 # Entity references
 
 Entity reference configurable fields and base fields will try to add
-dependencies automatically from other csv present.
+dependencies automatically from other file present.
 For example, if you have a user migration the author of you nodes
 will be lookep up in the user migration.
-The first column of any csv will be used as the identifier for that
+The first column (or element) of any file will be used as the identifier for that
 migration.
 
-If a entity reference field is not able to determine the bundle it
-should reference you can specify it in the name of the field like thi
+If an entity reference field is not able to determine the bundle it
+should reference you can specify it in the name of the field like this
 
 title,uid,body,field_related:article
 Hello world,demo,Body,My article
@@ -68,10 +68,10 @@ Multicomponent fields
 
 Some fields such as text_with_summary have many components:
 value, format and summary for this specific field.
-You can map them in your CSV header as "body" and the text will be migrated.
+You can map them in your file as "body" and the text will be migrated.
 
 However if you want different values for the different subcomponents
-they have to be specified in the CSV header file by capitalizing the
+they have to be specified in the file by capitalizing the
 Subcomponent like this:
 ```
 title,uid,bodyValue,bodyFormat,bodySummary,field_imageTarget_id,field_imageAlt,field_related
@@ -83,7 +83,47 @@ You can also use a escaped JSON array like this for "body" instead of changing t
 Hello page 2,demo,"{\"value\":\"<p>ffff<\/p>\"\,\"format\":\"full_html\",\"summary\":\"xxxxx\"}"
 ```
 
+Not so much escaping is needed if you use a yaml format file.
+
 You will have to specify all of the subfields on the JSON due to this bugs:
 https://www.drupal.org/node/2639556
 https://www.drupal.org/node/2632814
 so just "value" and "format" is not enough
+
+
+# Yaml support
+
+To use sandbox yaml d8 port, add this repo to composer:
+
+```
+"repositories": [
+        {
+            "type": "package",
+            "package": {
+               "name": "drupal/migrate_source_yaml",
+               "version": "dev-custom",
+               "type": "drupal-module",
+               "source": {
+                   "type": "git",
+                   "url": "https://git.drupal.org/sandbox/stborchert/2808617.git",
+                   "reference": "8.x-1.x"
+               }
+           }
+        },
+...
+require: {
+        "drupal/migrate_source_yaml": "dev-custom"
+...
+```
+
+Or install manually: https://drupal.org/sandbox/stborchert/2808617
+
+
+# Translation support
+
+The name of the files that define a translations follows the scheme: ENTITY_TYPE.BUNDLE.LANGCODE.FILE_TYPE
+like or node.article.es.yml, beeing the original migration node.article.yml
+
+There must exist always the field 'translation_origin', which references to the key of the origin content.
+
+See the examples: node.article.yml and node.article.es.yml in the example_default_content_yml folder.
