@@ -22,9 +22,18 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     while (($file = readdir($handle)) !== FALSE) {
       $fileparts = explode('.', $file);
       if ($file != "." && $file != "..") {
+        $language = '';
         $entity_type = $fileparts[0];
         $bundle = $fileparts[1];
-        $type = $fileparts[2];
+        // If the file is a translation save the language that is informed in
+        // the filename before the file extension.
+        if (isset($fileparts[3])) {
+          $language = $fileparts[2];
+          $type = $fileparts[3];
+        }
+        else {
+          $type = $fileparts[2];
+        }
         $line = NULL;
 
         switch ($type) {
@@ -43,14 +52,20 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
         }
 
+        // Add the language to the migration name in the case it is a
+        // translation migration.
+        $id = empty($language) ? 'migrate_default_content_' . $entity_type . '_' . $bundle : 'migrate_default_content_' . $entity_type . '_' . $bundle . '_' . $language;
+
         if ($line) {
-          $migrations['migrate_default_content_' . $entity_type . '_' . $bundle] = [
+          $migrations[$id] = [
             'first_line' => $line,
             'entity_type' => $entity_type,
             'bundle' => $bundle,
             'type' => $type,
             'filename' => $file,
+            'language' => $language,
           ];
+
         }
       }
     }
@@ -86,6 +101,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       'status' => 1,
       'destination' => [
         'plugin' => 'entity:' . $migration['entity_type'],
+        'translations' => FALSE,
       ],
     ];
 
@@ -96,6 +112,9 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         'header_row_count' => 1,
         'keys' => [
           0 => $key,
+        ],
+        'constants' => [
+          'langcode' => $migration['language'],
         ],
       ];
     }
@@ -109,6 +128,9 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
           ],
         ],
         'fields' => array_combine($headers, $headers),
+        'constants' => [
+          'langcode' => $migration['language'],
+        ],
       ];
     }
 
@@ -125,65 +147,92 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       // Headers can have spaces or line endings as is the case for the last
       // field.
       $field = trim($field);
-      // Extra config can be specified like field_name:bundle.
-      $extra = explode(':', $field);
-      // Handle CSV header fieldSubfield e.g. "bodyFormat".
-      $components = preg_split('/([A-Z])/', array_shift($extra), -1, PREG_SPLIT_DELIM_CAPTURE);
-      $field = array_shift($components);
-      $subfield = strtolower(implode($components));
+      if ($field == 'translation_origin') {
+        // This is the field that references the origin node of a translation,
+        // it is used to detect that the migration is a translation.
 
-      $dest_field = empty($subfield) ? $field : $field . '/' . $subfield;
+        // Define the id type of the origin migration.
+        $id_type = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('id');
+        // Define the origin migration.
+        $migration_plugin['process'][$id_type] = [
+          [
+            'plugin' => 'migration',
+            'source' => $field,
+            'migration' => 'migrate_default_content_' . $migration['entity_type'] . '_' . $migration['bundle'],
+          ],
 
-      // It needs to be a normalized process.
-      // See: https://api.drupal.org/api/drupal/core!modules!migrate!src!Plugin!Migration.php/function/Migration%3A%3AgetProcessNormalized/
-      $migration_plugin['process'][$dest_field] = [
-        [
-          'plugin' => 'get',
-          'source' => $field . ucfirst($subfield) . (empty($extra) ? '' : ':' . implode(':', $extra)),
-        ],
+        ];
 
-      ];
+        // Define the langcode of the translation.
+        $migration_plugin['process']['langcode'] = 'constants/langcode';
+        // Define the content as translatable.
+        $migration_plugin['destination']['translations'] = TRUE;
+        // Define the dependency to the origin migration.
+        $migration_plugin['migration_dependencies']['required'][] = 'migrate_default_content_' . $migration['entity_type'] . '_' . $migration['bundle'];
 
-      // If this an entity_reference field and a migrate_default_content
-      // migration exists add it automatically.
-      $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration['entity_type'], $migration['bundle'])[$field];
-      // Handle special field types.
-      if ($field_definition) {
-        switch ($field_definition->getType()) {
-          case 'entity_reference':
-          case 'entity_reference_revisions':
-            $settings = $field_definition->getItemDefinition()->getSettings();
-            $target_entity_type = $settings['target_type'];
 
-            // In the case of an entity reference the extra configuration is
-            // the bundles it should reference.
-            if (isset($settings['handler_settings']['target_bundles'])) {
-              $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
-            }
-            if (!empty($extra)) {
-              // Add all posible referenceable bundles.
-              foreach ($extra as $target_bundle) {
-                $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
+      }
+      else {
+        // Extra config can be specified like field_name:bundle.
+        $extra = explode(':', $field);
+        // Handle CSV header fieldSubfield e.g. "bodyFormat".
+        $components = preg_split('/([A-Z])/', array_shift($extra), -1, PREG_SPLIT_DELIM_CAPTURE);
+        $field = array_shift($components);
+        $subfield = strtolower(implode($components));
+
+        $dest_field = empty($subfield) ? $field : $field . '/' . $subfield;
+
+        // It needs to be a normalized process.
+        // See: https://api.drupal.org/api/drupal/core!modules!migrate!src!Plugin!Migration.php/function/Migration%3A%3AgetProcessNormalized/
+        $migration_plugin['process'][$dest_field] = [
+          [
+            'plugin' => 'get',
+            'source' => $field . ucfirst($subfield) . (empty($extra) ? '' : ':' . implode(':', $extra)),
+          ],
+
+        ];
+
+        // If this an entity_reference field and a migrate_default_content
+        // migration exists add it automatically.
+        $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration['entity_type'], $migration['bundle'])[$field];
+        // Handle special field types.
+        if ($field_definition) {
+          switch ($field_definition->getType()) {
+            case 'entity_reference':
+            case 'entity_reference_revisions':
+              $settings = $field_definition->getItemDefinition()->getSettings();
+              $target_entity_type = $settings['target_type'];
+
+              // In the case of an entity reference the extra configuration is
+              // the bundles it should reference.
+              if (isset($settings['handler_settings']['target_bundles'])) {
+                $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
+              }
+              if (!empty($extra)) {
+                // Add all posible referenceable bundles.
+                foreach ($extra as $target_bundle) {
+                  $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
+                  $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+                }
+              }
+              // Assume is a entity with only one bundle. e.g. user.
+              else {
+                $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
                 $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
               }
-            }
-            // Assume is a entity with only one bundle. e.g. user.
-            else {
-              $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
+
+              break;
+
+            case 'file':
+            case 'image':
+              $target_id = 'migrate_default_content_file';
               $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
-            }
 
-            break;
+              break;
 
-          case 'file':
-          case 'image':
-            $target_id = 'migrate_default_content_file';
-            $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
-
-            break;
-
-          default:
-            break;
+            default:
+              break;
+          }
         }
       }
     }

@@ -1,0 +1,13 @@
+-
+  title: Artículo en castellano
+  uid: editor_test
+  bodyValue: TEST
+  bodyFormat: full_html
+  bodySummary: Resumen
+  field_imageTarget_id: magic.png
+  field_imageAlt: Alt text
+  field_related:
+    - Hello page
+    - Hello page 2
+  translation_origin: Hello article
+
