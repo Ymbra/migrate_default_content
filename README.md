@@ -75,12 +75,6 @@ but using an id that is not changing like the uuid
 Meanwhile you can set path for you nodes an internal links to it like
 internal:/about-us
 
-
-# Multivalue fields
-
-Use a escaped JSON array like this:
-demo2,demo2,demo2@demo.com,1,"[\"administrator\",\"editor\"]"
-
 Multicomponent fields
 
 Some fields such as text_with_summary have many components:
@@ -92,12 +86,6 @@ they have to be specified in the file by capitalizing the
 Subcomponent like this:
 ```
 title,uid,bodyValue,bodyFormat,bodySummary,field_imageTarget_id,field_imageAlt,field_related
-```
-
-You can also use a escaped JSON array like this for "body" instead of changing the headers:
-
-```
-Hello page 2,demo,"{\"value\":\"<p>ffff<\/p>\"\,\"format\":\"full_html\",\"summary\":\"xxxxx\"}"
 ```
 
 Not so much escaping is needed if you use a yaml format file.
