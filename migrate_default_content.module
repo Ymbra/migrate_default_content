@@ -24,11 +24,6 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       if ($file != "." && $file != "..") {
         $language = '';
         $entity_type = $fileparts[0];
-        $is_revision = FALSE;
-        if (substr($entity_type, -9) === '_revision') {
-          $entity_type = substr($entity_type, 0, -9);
-          $is_revision = TRUE;
-        }
         $bundle = $fileparts[1];
         // If the file is a translation save the language that is informed in
         // the filename before the file extension.
@@ -69,8 +64,14 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
             'type' => $type,
             'filename' => $file,
             'language' => $language,
-            'is_revision' => $is_revision,
+            'is_revision' => FALSE,
           ];
+
+          if (\Drupal::entityTypeManager()->getDefinition($entity_type)->isRevisionable()) {
+            $id_revision = empty($language) ? 'migrate_default_content_' . $entity_type . '_revision_' . $bundle : 'migrate_default_content_' . $entity_type . '_revision_' . $bundle . '_' . $language;
+            $migrations[$id_revision] = $migrations[$id];
+            $migrations[$id_revision]['is_revision'] = TRUE;
+          }
 
         }
       }
@@ -99,6 +100,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     // Assume the key is the first field of the csv.
     $key = trim(reset($headers));
 
+    $destination = $migration['is_revision'] ? 'entity_revision' : 'entity';
     $migration_plugin = [
       'id' => $id,
       'migration_group' => 'migrate_default_content',
@@ -106,7 +108,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       'class' => '\Drupal\migrate\Plugin\Migration',
       'status' => 1,
       'destination' => [
-        'plugin' => 'entity:' . $migration['entity_type'],
+        'plugin' => $destination . ':' . $migration['entity_type'],
         'translations' => FALSE,
       ],
     ];
@@ -255,21 +257,6 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       $migration_plugin = array_merge_recursive($migration_plugin, $override);
     }
     $definitions[$id] = $migration_plugin;
-
-    if ($migration['is_revision']) {
-      $id_key = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('id');
-      $revision_migration_plugin = $migration_plugin;
-      $revision_migration_plugin['id'] = str_replace($migration['entity_type'], $migration['entity_type'] . '_revision', $id);
-      $revision_migration_plugin['label'] = $revision_migration_plugin['id'];
-      $revision_migration_plugin['destination']['plugin'] = 'entity_revision:' . $migration['entity_type'];
-      $revision_migration_plugin['process'][$id_key] = [
-        'plugin' => 'migration',
-        'migration' => $id,
-        'source' => $key,
-      ];
-
-      $definitions[$revision_migration_plugin['id']] = $revision_migration_plugin;
-    }
   }
   if (isset($migrations['migrate_default_content_file'])) {
     $definitions['migrate_default_content_file'] = [
