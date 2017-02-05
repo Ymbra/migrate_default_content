@@ -235,6 +235,22 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
           }
         }
       }
+
+      if ($field === 'uri' && $migration['entity_type'] === 'file') {
+        unset($migration_plugin['process']['uri']);
+      }
+    }
+
+    if ($migration['entity_type'] === 'file') {
+      $migration_plugin['process']['uri'] = [
+        [
+          'plugin' => 'file_copy',
+          'source' => [
+            '@source_full_path',
+            '@destination_full_uri',
+          ],
+        ],
+      ];
     }
 
     // Look up for an override yml file.
@@ -246,6 +262,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     }
     $definitions[$id] = $migration_plugin;
   }
+
   if (isset($migrations['migrate_default_content_file'])) {
     $definitions['migrate_default_content_file'] = [
       'id' => 'migrate_default_content_file',
