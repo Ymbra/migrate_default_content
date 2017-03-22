@@ -3,3 +3,6 @@ services:
     class: Drupal\migrate_default_content\Event\MigrateEvent
     tags:
       - { name: event_subscriber }
+  plugin.manager.migrate_default_content.source:
+    class: Drupal\migrate_default_content\MigrateDefaultContentSourcePluginManager
+    parent: default_plugin_manager
