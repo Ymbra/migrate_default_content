@@ -10,7 +10,7 @@ use Symfony\Component\Yaml\Parser;
 /**
  * Implements hook_migration_plugins_alter().
  *
- * Create migrations based on the csv files.
+ * Create migrations based on data files.
  */
 function migrate_default_content_migration_plugins_alter(&$definitions) {
   $source_dir = DRUPAL_ROOT . '/' . \Drupal::config('migrate_default_content.settings')->get('source_dir');
@@ -105,7 +105,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       ],
     ];
 
-    if ('csv' === $migration['type']) {
+    if ($migration['type'] === 'csv') {
       $migration_plugin['source'] = [
         'plugin' => $migration['type'],
         'path' => $source_dir . '/' . $migration['filename'],
@@ -147,9 +147,9 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       // Headers can have spaces or line endings as is the case for the last
       // field.
       $field = trim($field);
+      // This is the field that references the origin node of a translation,
+      // it is used to detect that the migration is a translation.
       if ($field == 'translation_origin') {
-        // This is the field that references the origin node of a translation,
-        // it is used to detect that the migration is a translation.
 
         // Define the id type of the origin migration.
         $id_type = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('id');
@@ -169,7 +169,6 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         $migration_plugin['destination']['translations'] = TRUE;
         // Define the dependency to the origin migration.
         $migration_plugin['migration_dependencies']['required'][] = 'migrate_default_content_' . $migration['entity_type'] . '_' . $migration['bundle'];
-
 
       }
       else {
@@ -235,12 +234,10 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
           }
         }
       }
-
-      if ($field === 'uri' && $migration['entity_type'] === 'file') {
-        unset($migration_plugin['process']['uri']);
-      }
     }
 
+    // For custom file migrations set an uri field that
+    // copies the file as needed.
     if ($migration['entity_type'] === 'file') {
       $migration_plugin['process']['uri'] = [
         [

@@ -34,12 +34,26 @@ If there's a "files" directory inside your source directory, for example:
 A migration for those files will be automatically created and files can
 be referenced by their file name in the following way:
 
-```
+```csv
 title,uid,body,field_image
 Hello article,demo,Body,magic.png
 ```
 
 Be sure you have a magic.png file in your "files" folder.
+
+You can also create your own files migration in case you need more
+fields like uuid or the author of the image.
+
+In a file.file.yml you can do like the following
+```yml
+-
+   uuid: "368f014b-1eed-44f4-850e-cb8e08ad4753"
+   filename: "test.jpg"
+   source_full_path: "/tmp/test.jpg"
+   destination_full_uri: "public://custompath/test.jpg"
+```
+So the source path and the destination path can be custom also.
+Later the module will convert both in the 'uri' field of the file entity.
 
 # Menu link content
 
