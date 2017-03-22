@@ -4,6 +4,6 @@ description: Provides dummy content.
 core: 8.x
 package: Migration
 dependencies:
-  - drupal:migrate_drupal (>= 8.2)
+  - drupal:migrate (>= 8.2)
   - migrate_source_csv
   - migrate_source_yaml
