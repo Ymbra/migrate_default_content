@@ -1,0 +1,5 @@
+-
+  uuid: "368f014b-1eed-44f4-850e-cb8e08ad4753"
+  filename: "test.jpg"
+  source_full_path: "/tmp/test.jpg"
+  destination_full_uri: "public://custompath/test.jpg"
