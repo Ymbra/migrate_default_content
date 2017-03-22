@@ -193,9 +193,11 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
         // If this an entity_reference field and a migrate_default_content
         // migration exists add it automatically.
+        /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
         $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration['entity_type'], $migration['bundle'])[$field];
         // Handle special field types.
         if ($field_definition) {
+          $multiple = $field_definition->getFieldStorageDefinition()->getCardinality() !== 1;
           switch ($field_definition->getType()) {
             case 'entity_reference':
             case 'entity_reference_revisions':
@@ -211,13 +213,13 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                 // Add all posible referenceable bundles.
                 foreach ($extra as $target_bundle) {
                   $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
-                  $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+                  $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id, $multiple);
                 }
               }
               // Assume is a entity with only one bundle. e.g. user.
               else {
                 $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
-                $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+                $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id, $multiple);
               }
 
               break;
@@ -225,7 +227,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
             case 'file':
             case 'image':
               $target_id = 'migrate_default_content_file';
-              $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+              $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id, $multiple);
 
               break;
 
@@ -316,19 +318,41 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 /**
  * Add a migration to the process pipeline with its dependency.
  */
-function migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id) {
+function migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id, $multiple) {
   if (isset($migrations[$target_id])) {
     $dest_subfield = explode('/', $dest_field);
     if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id') {
       return $migration_plugin;
     }
-    // We don't need a source because only the first process plugin in
-    // the pipeline should have it and we already have the explode plugin.
-    $migration_plugin['process'][$dest_field][] = [
-      'plugin' => 'migration',
-      'migration' => $target_id,
-      'no_stub' => TRUE,
-    ];
+    if ($multiple) {
+      $process = [
+        'plugin' => 'iterator',
+        'process' => [],
+      ];
+
+      $target_headers = $migrations[$target_id]['first_line'];
+      // Assume the key is the first field of the csv.
+      $target_key = trim(reset($target_headers));
+
+      $process['process'][$dest_subfield[1]] = [
+        'plugin' => 'migration',
+        'migration' => $target_id,
+        'source' => $target_key,
+        'no_stub' => TRUE,
+      ];
+
+      $migration_plugin['process'][$dest_field][] = $process;
+    }
+    else {
+      // We don't need a source because only the first process plugin in
+      // the pipeline should have it and we already have the explode plugin.
+      $migration_plugin['process'][$dest_field][] = [
+        'plugin' => 'migration',
+        'migration' => $target_id,
+        'no_stub' => TRUE,
+      ];
+    }
+
     // Avoid dependencies on itself.
     if ($target_id != $migration_plugin['id']) {
       $migration_plugin['migration_dependencies']['required'][] = $target_id;
