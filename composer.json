@@ -12,7 +12,6 @@
   },
   "require": {
     "drupal/core": "~8.1",
-    "drupal/migrate_tools": "~8.0",
     "drupal/migrate_source_csv": "~8.0"
   }
 }
