@@ -230,6 +230,10 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
               break;
 
+            case 'password':
+              $migration_plugin['process'][$dest_field][] = [
+                'plugin' => 'password_hash',
+              ];
             default:
               break;
           }

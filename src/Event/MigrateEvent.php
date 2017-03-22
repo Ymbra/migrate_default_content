@@ -37,34 +37,6 @@ class MigrateEvent implements EventSubscriberInterface {
           $row->setSourceProperty($id, json_decode(stripslashes($property), TRUE));
         }
       }
-
-      // Get the destination entity type.
-      $destination_plugin = $migration->getDestinationConfiguration()['plugin'];
-      $entity_type = explode(':', $destination_plugin)[1];
-
-      $bundle_key = \Drupal::service('entity_type.manager')->getDefinition($entity_type)->getKey('bundle');
-
-      // Get the bundle.
-      if ($bundle_key) {
-        foreach ($migration->getProcess()[$bundle_key] as $plugin) {
-          if ($plugin['plugin'] === 'default_value') {
-            $bundle = $plugin['default_value'];
-          }
-        }
-      }
-      else {
-        $bundle = $entity_type;
-      }
-
-      $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $bundle);
-      foreach ($fields as $field_name => $definition) {
-        // Case for password fields.
-        if ($definition->getType() === 'password') {
-          $row->setSourceProperty($field_name, \Drupal::getContainer()->get('password')->hash(
-            $row->getSourceProperty($field_name)
-          ));
-        }
-      }
     }
   }
 
