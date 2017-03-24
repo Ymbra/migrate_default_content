@@ -8,7 +8,7 @@ The name of the files follows a standard: ENTITY_TYPE.BUNDLE.FILE_TYPE
 like user.user.csv or node.article.yml
 
 You can find examples for most entity types in the
-example_default_content folder.
+example_default_content_csv and example_default_content_yml folders.
 
 Any field with the password data type will be hashed automatically.
 
@@ -26,6 +26,9 @@ should reference you can specify it in the name of the field like this
 
 title,uid,body,field_related:article
 Hello world,demo,Body,My article
+
+Entity reference revision fields (mainly to give support to paragraphs) behave
+roughly the same.
 
 # Files
 

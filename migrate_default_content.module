@@ -211,13 +211,29 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                 // Add all posible referenceable bundles.
                 foreach ($extra as $target_bundle) {
                   $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
-                  $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+                  $migration_plugin = migrate_default_content_add_target_migration(
+                    $migrations,
+                    $migration_plugin,
+                    $dest_field,
+                    $target_id,
+                    $target_entity_type,
+                    $field_definition->getType()
+                  );
                 }
               }
-              // Assume is a entity with only one bundle. e.g. user.
+              // Assume is an entity with only one bundle. e.g. user.
+              // TODO: do not assume. it might be because all bundles are
+              // allowed.
               else {
                 $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
-                $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+                $migration_plugin = migrate_default_content_add_target_migration(
+                  $migrations,
+                  $migration_plugin,
+                  $dest_field,
+                  $target_id,
+                  $target_entity_type,
+                  $field_definition->getType()
+                );
               }
 
               break;
@@ -225,7 +241,13 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
             case 'file':
             case 'image':
               $target_id = 'migrate_default_content_file';
-              $migration_plugin = migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id);
+              $migration_plugin = migrate_default_content_add_target_migration(
+                $migrations,
+                $migration_plugin,
+                $dest_field,
+                $target_id,
+                'file'
+              );
 
               break;
 
@@ -316,10 +338,17 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 /**
  * Add a migration to the process pipeline with its dependency.
  */
-function migrate_default_content_add_target_migration($migrations, $migration_plugin, $dest_field, $target_id) {
+function migrate_default_content_add_target_migration(
+  $migrations,
+  $migration_plugin,
+  $dest_field,
+  $target_id,
+  $target_entity_type,
+  $field_type = 'entity_reference'
+) {
   if (isset($migrations[$target_id])) {
     $dest_subfield = explode('/', $dest_field);
-    if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id') {
+    if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id' && $dest_subfield[1] != 'target_revision_id') {
       return $migration_plugin;
     }
     // We don't need a source because only the first process plugin in
@@ -329,6 +358,13 @@ function migrate_default_content_add_target_migration($migrations, $migration_pl
       'migration' => $target_id,
       'no_stub' => TRUE,
     ];
+    // Add only for entity_reference revisions.
+    if ($field_type === 'entity_reference_revisions') {
+      $migration_plugin['process'][$dest_field][] = [
+        'plugin' => 'content_id_to_revision_reference',
+        'target_entity_type' => $target_entity_type,
+      ];
+    }
     // Avoid dependencies on itself.
     if ($target_id != $migration_plugin['id']) {
       $migration_plugin['migration_dependencies']['required'][] = $target_id;
