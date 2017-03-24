@@ -18,9 +18,9 @@ class Source extends Plugin {
   public $id;
 
   /**
-   * An array of valid extensions for this source.
+   * The valid extensions for this source.
    *
-   * @var array
+   * @var string
    */
-  public $extensions;
+  public $extension;
 }
