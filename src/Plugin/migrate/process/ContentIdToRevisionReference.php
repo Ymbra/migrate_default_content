@@ -58,7 +58,7 @@ class ContentIdToRevisionReference extends ProcessPluginBase implements Containe
       ->getStorage($this->configuration['target_entity_type'])
       ->load($value)
       ->getRevisionId();
-    // Build and array with the structure that entity reference revisions
+    // Build an array with the structure that entity reference revisions
     // is expecting.
     return [
       'target_id' => $value,
