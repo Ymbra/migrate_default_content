@@ -348,7 +348,7 @@ function migrate_default_content_add_target_migration(
 ) {
   if (isset($migrations[$target_id])) {
     $dest_subfield = explode('/', $dest_field);
-    if (isset($dest_subfield[1]) && ($dest_subfield[1] != 'target_id') && ($dest_subfield[1] != 'target_revision_id')) {
+    if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id' && $dest_subfield[1] != 'target_revision_id') {
       return $migration_plugin;
     }
     // We don't need a source because only the first process plugin in
