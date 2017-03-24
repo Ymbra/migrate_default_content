@@ -15,6 +15,10 @@ use Symfony\Component\Yaml\Parser;
 function migrate_default_content_migration_plugins_alter(&$definitions) {
   $source_dir = DRUPAL_ROOT . '/' . \Drupal::config('migrate_default_content.settings')->get('source_dir');
 
+  $sourceManager = \Drupal::getContainer()->get('plugin.manager.migrate_default_content.source');
+
+  $sourcePlugins = $sourceManager->getDefinitions();
+
   // First we create a structure with all the migrations because we want to know
   // which ones are available and set dependencies.
   $migrations = [];
@@ -29,44 +33,49 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         // the filename before the file extension.
         if (isset($fileparts[3])) {
           $language = $fileparts[2];
-          $type = $fileparts[3];
+          $extension = $fileparts[3];
         }
         else {
-          $type = $fileparts[2];
-        }
-        $line = NULL;
-
-        switch ($type) {
-          case 'csv':
-            // Read first line of the file to get the fields to be migrated.
-            $csv = fopen($source_dir . '/' . $file, 'r');
-            $line = explode(',', fgets($csv));
-            fclose($csv);
-            break;
-
-          case 'yml':
-            $parser = isset($parser) ? $parser : new Parser();
-            $data = $parser->parse(file_get_contents($source_dir . '/' . $file));
-            $line = array_keys($data[0]);
-            break;
-
+          $extension = $fileparts[2];
         }
 
-        // Add the language to the migration name in the case it is a
-        // translation migration.
-        $id = empty($language) ? 'migrate_default_content_' . $entity_type . '_' . $bundle : 'migrate_default_content_' . $entity_type . '_' . $bundle . '_' . $language;
-
-        if ($line) {
-          $migrations[$id] = [
-            'first_line' => $line,
-            'entity_type' => $entity_type,
-            'bundle' => $bundle,
-            'type' => $type,
-            'filename' => $file,
-            'language' => $language,
-          ];
-
+        foreach ($sourcePlugins as $sourcePlugin) {
+          if ($sourcePlugin['extension'] == $extension) {
+            $plugin = $sourceManager->createInstance($sourcePlugin['id']);
+          }
         }
+
+//        switch ($type) {
+//          case 'csv':
+//            // Read first line of the file to get the fields to be migrated.
+//            $csv = fopen($source_dir . '/' . $file, 'r');
+//            $line = explode(',', fgets($csv));
+//            fclose($csv);
+//            break;
+//
+//          case 'yml':
+//            $parser = isset($parser) ? $parser : new Parser();
+//            $data = $parser->parse(file_get_contents($source_dir . '/' . $file));
+//            $line = array_keys($data[0]);
+//            break;
+//
+//        }
+//
+//        // Add the language to the migration name in the case it is a
+//        // translation migration.
+//        $id = empty($language) ? 'migrate_default_content_' . $entity_type . '_' . $bundle : 'migrate_default_content_' . $entity_type . '_' . $bundle . '_' . $language;
+//
+//        if ($line) {
+//          $migrations[$id] = [
+//            'first_line' => $line,
+//            'entity_type' => $entity_type,
+//            'bundle' => $bundle,
+//            'type' => $type,
+//            'filename' => $file,
+//            'language' => $language,
+//          ];
+//
+//        }
       }
     }
     closedir($handle);
