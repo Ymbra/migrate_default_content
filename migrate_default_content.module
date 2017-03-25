@@ -16,7 +16,6 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
   $source_dir = DRUPAL_ROOT . '/' . \Drupal::config('migrate_default_content.settings')->get('source_dir');
 
   $sourceManager = \Drupal::getContainer()->get('plugin.manager.migrate_default_content.source');
-
   $sourcePlugins = $sourceManager->getDefinitions();
 
   // First we create a structure with all the migrations because we want to know
@@ -24,58 +23,26 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
   $migrations = [];
   if ($handle = opendir($source_dir)) {
     while (($file = readdir($handle)) !== FALSE) {
-      $fileparts = explode('.', $file);
       if ($file != "." && $file != "..") {
-        $language = '';
-        $entity_type = $fileparts[0];
-        $bundle = $fileparts[1];
-        // If the file is a translation save the language that is informed in
-        // the filename before the file extension.
-        if (isset($fileparts[3])) {
-          $language = $fileparts[2];
-          $extension = $fileparts[3];
-        }
-        else {
-          $extension = $fileparts[2];
-        }
-
+        $extension = pathinfo($file, PATHINFO_EXTENSION);
         foreach ($sourcePlugins as $sourcePlugin) {
           if ($sourcePlugin['extension'] == $extension) {
-            $plugin = $sourceManager->createInstance($sourcePlugin['id']);
+            $config = [
+              'source_dir' => $source_dir,
+              'filename' => $file,
+            ];
+
+            /** @var \Drupal\migrate_default_content\BaseSourcePlugin */
+            $plugin = $sourceManager->createInstance($sourcePlugin['id'], $config);
+
+            $id = 'migrate_default_content_' . $plugin->getEntityType() . '_' . $plugin->getBundle();
+            if (!empty($plugin->getLanguage())) {
+              $id .= '_' . $plugin->getLanguage();
+            }
+
+            $migrations[$id] = $plugin;
           }
         }
-
-//        switch ($type) {
-//          case 'csv':
-//            // Read first line of the file to get the fields to be migrated.
-//            $csv = fopen($source_dir . '/' . $file, 'r');
-//            $line = explode(',', fgets($csv));
-//            fclose($csv);
-//            break;
-//
-//          case 'yml':
-//            $parser = isset($parser) ? $parser : new Parser();
-//            $data = $parser->parse(file_get_contents($source_dir . '/' . $file));
-//            $line = array_keys($data[0]);
-//            break;
-//
-//        }
-//
-//        // Add the language to the migration name in the case it is a
-//        // translation migration.
-//        $id = empty($language) ? 'migrate_default_content_' . $entity_type . '_' . $bundle : 'migrate_default_content_' . $entity_type . '_' . $bundle . '_' . $language;
-//
-//        if ($line) {
-//          $migrations[$id] = [
-//            'first_line' => $line,
-//            'entity_type' => $entity_type,
-//            'bundle' => $bundle,
-//            'type' => $type,
-//            'filename' => $file,
-//            'language' => $language,
-//          ];
-//
-//        }
       }
     }
     closedir($handle);
@@ -94,13 +61,11 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     closedir($handle);
   }
 
+  /** @var \Drupal\migrate_default_content\BaseSourcePlugin $migration */
   foreach ($migrations as $id => $migration) {
     if ($id === 'migrate_default_content_file') {
       continue;
     }
-    $headers = $migration['first_line'];
-    // Assume the key is the first field of the csv.
-    $key = trim(reset($headers));
 
     $migration_plugin = [
       'id' => $id,
@@ -109,50 +74,24 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       'class' => '\Drupal\migrate\Plugin\Migration',
       'status' => 1,
       'destination' => [
-        'plugin' => 'entity:' . $migration['entity_type'],
+        'plugin' => 'entity:' . $migration->getEntityType(),
         'translations' => FALSE,
       ],
     ];
 
-    if ($migration['type'] === 'csv') {
-      $migration_plugin['source'] = [
-        'plugin' => $migration['type'],
-        'path' => $source_dir . '/' . $migration['filename'],
-        'header_row_count' => 1,
-        'keys' => [
-          0 => $key,
-        ],
-        'constants' => [
-          'langcode' => $migration['language'],
-        ],
-      ];
-    }
-    if ('yml' === $migration['type']) {
-      $migration_plugin['source'] = [
-        'plugin' => 'yaml',
-        'file' => $source_dir . '/' . $migration['filename'],
-        'ids' => [
-          $key => [
-            'type' => 'string',
-          ],
-        ],
-        'fields' => array_combine($headers, $headers),
-        'constants' => [
-          'langcode' => $migration['language'],
-        ],
-      ];
-    }
+    $migration_plugin['source'] = $migration->getSourceMigrationDefinition();
 
     // Get bundle info.
-    $bundle_key = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('bundle');
+    $bundle_key = \Drupal::service('entity_type.manager')->getDefinition($migration->getEntityType())->getKey('bundle');
 
     if ($bundle_key) {
       $migration_plugin['process'][$bundle_key] = [
         'plugin' => 'default_value',
-        'default_value' => $migration['bundle'],
+        'default_value' => $migration->getBundle(),
       ];
     }
-    foreach ($headers as $field) {
+    $header = $migration->getHeader();
+    foreach ($header as $field) {
       // Headers can have spaces or line endings as is the case for the last
       // field.
       $field = trim($field);
@@ -161,13 +100,13 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       if ($field == 'translation_origin') {
 
         // Define the id type of the origin migration.
-        $id_type = \Drupal::service('entity_type.manager')->getDefinition($migration['entity_type'])->getKey('id');
+        $id_type = \Drupal::service('entity_type.manager')->getDefinition($migration->getEntityType())->getKey('id');
         // Define the origin migration.
         $migration_plugin['process'][$id_type] = [
           [
             'plugin' => 'migration',
             'source' => $field,
-            'migration' => 'migrate_default_content_' . $migration['entity_type'] . '_' . $migration['bundle'],
+            'migration' => 'migrate_default_content_' . $migration->getEntityType() . '_' . $migration->getBundle(),
           ],
 
         ];
@@ -177,7 +116,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         // Define the content as translatable.
         $migration_plugin['destination']['translations'] = TRUE;
         // Define the dependency to the origin migration.
-        $migration_plugin['migration_dependencies']['required'][] = 'migrate_default_content_' . $migration['entity_type'] . '_' . $migration['bundle'];
+        $migration_plugin['migration_dependencies']['required'][] = 'migrate_default_content_' . $migration->getEntityType() . '_' . $migration->getBundle();
 
       }
       else {
@@ -202,7 +141,8 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
         // If this an entity_reference field and a migrate_default_content
         // migration exists add it automatically.
-        $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration['entity_type'], $migration['bundle'])[$field];
+        /** @var \Drupal\Core\Field\BaseFieldDefinition $field_definition */
+        $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration->getEntityType(), $migration->getBundle())[$field];
         // Handle special field types.
         if ($field_definition) {
           switch ($field_definition->getType()) {
@@ -217,7 +157,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                 $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
               }
               if (!empty($extra)) {
-                // Add all posible referenceable bundles.
+                // Add all possible referenceable bundles.
                 foreach ($extra as $target_bundle) {
                   $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
                   $migration_plugin = migrate_default_content_add_target_migration(
@@ -272,7 +212,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
     // For custom file migrations set an uri field that
     // copies the file as needed.
-    if ($migration['entity_type'] === 'file') {
+    if ($migration->getEntityType() === 'file') {
       $migration_plugin['process']['uri'] = [
         [
           'plugin' => 'file_copy',
@@ -285,7 +225,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     }
 
     // Look up for an override yml file.
-    $override_file_path = $source_dir . '/overrides/' . $migration['entity_type'] . '.' . $migration['bundle'] . '.yml';
+    $override_file_path = $source_dir . '/overrides/' . $migration->getEntityType() . '.' . $migration->getBundle() . '.yml';
     if (file_exists($override_file_path)) {
       $yaml = new Parser();
       $override = $yaml->parse(file_get_contents($override_file_path));
