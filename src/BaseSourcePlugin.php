@@ -6,7 +6,7 @@ namespace Drupal\migrate_default_content;
  * Defines a Yaml data source implementation.
  *
  * @Source(
- *   id = "Yaml",
+ *   id = "yaml",
  *   extension = "yml"
  * )
  */
