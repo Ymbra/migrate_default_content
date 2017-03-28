@@ -5,5 +5,3 @@ core: 8.x
 package: Migration
 dependencies:
   - drupal:migrate (>= 8.2)
-  - migrate_source_csv
-  - migrate_source_yaml
