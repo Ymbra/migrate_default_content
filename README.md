@@ -108,34 +108,6 @@ https://www.drupal.org/node/2632814
 so just "value" and "format" is not enough
 
 
-# Yaml support
-
-To use sandbox yaml d8 port, add this repo to composer:
-
-```
-"repositories": [
-        {
-            "type": "package",
-            "package": {
-               "name": "drupal/migrate_source_yaml",
-               "version": "dev-custom",
-               "type": "drupal-module",
-               "source": {
-                   "type": "git",
-                   "url": "https://git.drupal.org/sandbox/stborchert/2808617.git",
-                   "reference": "8.x-1.x"
-               }
-           }
-        },
-...
-require: {
-        "drupal/migrate_source_yaml": "dev-custom"
-...
-```
-
-Or install manually: https://drupal.org/sandbox/stborchert/2808617
-
-
 # Translation support
 
 The name of the files that define a translations follows the scheme: ENTITY_TYPE.BUNDLE.LANGCODE.FILE_TYPE
