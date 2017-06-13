@@ -189,6 +189,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
             case 'file':
             case 'image':
+            case 'svg_image_field':
               $target_id = 'migrate_default_content_file';
               $migration_plugin = migrate_default_content_add_target_migration(
                 $migrations,
