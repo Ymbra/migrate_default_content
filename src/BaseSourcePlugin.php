@@ -2,14 +2,6 @@
 
 namespace Drupal\migrate_default_content;
 
-/**
- * Defines a Yaml data source implementation.
- *
- * @Source(
- *   id = "yaml",
- *   extension = "yml"
- * )
- */
 class BaseSourcePlugin implements SourcePluginInterface {
 
   /**

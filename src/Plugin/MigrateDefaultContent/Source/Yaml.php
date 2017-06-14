@@ -9,7 +9,7 @@ use Drupal\migrate_default_content\BaseSourcePlugin;
  * Defines a Yaml data source implementation.
  *
  * @Source(
- *   id = "Yaml",
+ *   id = "yaml",
  *   extension = "yml"
  * )
  */
