@@ -157,18 +157,19 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                 $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
               }
               if (!empty($extra)) {
+                $target_ids = [];
                 // Add all possible referenceable bundles.
                 foreach ($extra as $target_bundle) {
-                  $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
-                  $migration_plugin = migrate_default_content_add_target_migration(
-                    $migrations,
-                    $migration_plugin,
-                    $dest_field,
-                    $target_id,
-                    $target_entity_type,
-                    $field_definition->getType()
-                  );
+                  $target_ids[] = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
                 }
+                $migration_plugin = migrate_default_content_add_target_migration(
+                  $migrations,
+                  $migration_plugin,
+                  $dest_field,
+                  $target_ids,
+                  $target_entity_type,
+                  $field_definition->getType()
+                );
               }
               // Assume is an entity with only one bundle. e.g. user.
               // TODO: do not assume. it might be because all bundles are
@@ -179,7 +180,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                   $migrations,
                   $migration_plugin,
                   $dest_field,
-                  $target_id,
+                  [$target_id],
                   $target_entity_type,
                   $field_definition->getType()
                 );
@@ -195,7 +196,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                 $migrations,
                 $migration_plugin,
                 $dest_field,
-                $target_id,
+                [$target_id],
                 'file'
               );
 
@@ -292,11 +293,12 @@ function migrate_default_content_add_target_migration(
   $migrations,
   $migration_plugin,
   $dest_field,
-  $target_id,
+  $target_ids,
   $target_entity_type,
   $field_type = 'entity_reference'
 ) {
-  if (isset($migrations[$target_id])) {
+  $target_ids = array_intersect(array_keys($migrations), $target_ids);
+  if (!empty($target_ids)) {
     $dest_subfield = explode('/', $dest_field);
     if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id' && $dest_subfield[1] != 'target_revision_id') {
       return $migration_plugin;
@@ -305,7 +307,7 @@ function migrate_default_content_add_target_migration(
     // the pipeline should have it and we already have the explode plugin.
     $migration_plugin['process'][$dest_field][] = [
       'plugin' => 'migration',
-      'migration' => $target_id,
+      'migration' => $target_ids,
       'no_stub' => TRUE,
     ];
     // Add only for entity_reference revisions.
@@ -316,9 +318,12 @@ function migrate_default_content_add_target_migration(
       ];
     }
     // Avoid dependencies on itself.
-    if ($target_id != $migration_plugin['id']) {
-      $migration_plugin['migration_dependencies']['required'][] = $target_id;
+    foreach ($target_ids as $target_id) {
+      if ($target_id != $migration_plugin['id']) {
+        $migration_plugin['migration_dependencies']['required'][] = $target_id;
+      }
     }
   }
+
   return $migration_plugin;
 }
