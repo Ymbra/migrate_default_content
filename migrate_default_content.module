@@ -32,7 +32,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
               'filename' => $file,
             ];
 
-            /** @var \Drupal\migrate_default_content\BaseSourcePlugin */
+            /* @var \Drupal\migrate_default_content\BaseSourcePlugin */
             $plugin = $sourceManager->createInstance($sourcePlugin['id'], $config);
 
             $id = 'migrate_default_content_' . $plugin->getEntityType() . '_' . $plugin->getBundle();

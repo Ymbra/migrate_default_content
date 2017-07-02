@@ -1,8 +1,4 @@
 services:
-  migrate_default_content.migrate_subscriber:
-    class: Drupal\migrate_default_content\Event\MigrateEvent
-    tags:
-      - { name: event_subscriber }
   plugin.manager.migrate_default_content.source:
     class: Drupal\migrate_default_content\SourcePluginManager
     parent: default_plugin_manager
