@@ -12,7 +12,7 @@ function migrate_default_content_libraries_info() {
     'name' => 'Spyc',
     'version' => '0.5.1',
     'vendor url' => 'https://github.com/mustangostang/spyc',
-    'download url' => 'https://raw2.github.com/mustangostang/spyc/master/Spyc.php',
+    'download url' => 'https://raw.githubusercontent.com/mustangostang/spyc/0.5.1/Spyc.php',
     'version arguments' => array(
       'file' => 'Spyc.php',
       'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@',
