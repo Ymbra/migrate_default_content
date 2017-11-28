@@ -105,7 +105,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         // Define the origin migration.
         $migration_plugin['process'][$id_type] = [
           [
-            'plugin' => 'migration',
+            'plugin' => 'migration_lookup',
             'source' => $field,
             'migration' => 'migrate_default_content_' . $migration->getEntityType() . '_' . $migration->getBundle(),
           ],
@@ -326,7 +326,7 @@ function migrate_default_content_add_target_migration(
         'plugin' => 'iterator',
         'process' => [
           'target_id' => [
-            'plugin' => 'migration',
+            'plugin' => 'migration_lookup',
             'migration' => $target_ids,
             'source' => $target_key,
             'no_stub' => TRUE,
@@ -359,7 +359,7 @@ function migrate_default_content_add_target_migration(
       // We don't need a source because only the first process plugin in
       // the pipeline should have it and we already have the explode plugin.
       $migration_plugin['process'][$dest_field][] = [
-        'plugin' => 'migration',
+        'plugin' => 'migration_lookup',
         'migration' => $target_ids,
         'no_stub' => TRUE,
       ];
