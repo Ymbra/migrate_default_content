@@ -36,7 +36,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
             /* @var \Drupal\migrate_default_content\BaseSourcePlugin */
             $plugin = $sourceManager->createInstance($sourcePlugin['id'], $config);
 
-            $id = 'migrate_default_content_' . $plugin->getEntityType() . '_' . $plugin->getBundle();
+            $id = 'mdc_' . $plugin->getEntityType() . '_' . $plugin->getBundle();
             if (!empty($plugin->getLanguage())) {
               $id .= '_' . $plugin->getLanguage();
             }
@@ -56,7 +56,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         $data_rows[] = ['filename' => $file];
       }
     }
-    $migrations['migrate_default_content_file'] = [
+    $migrations['mdc_file'] = [
       'data_rows' => $data_rows,
     ];
     closedir($handle);
@@ -64,7 +64,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
   /** @var \Drupal\migrate_default_content\BaseSourcePlugin $migration */
   foreach ($migrations as $id => $migration) {
-    if ($id === 'migrate_default_content_file') {
+    if ($id === 'mdc_file') {
       continue;
     }
 
@@ -107,7 +107,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
           [
             'plugin' => 'migration_lookup',
             'source' => $field,
-            'migration' => 'migrate_default_content_' . $migration->getEntityType() . '_' . $migration->getBundle(),
+            'migration' => 'mdc_' . $migration->getEntityType() . '_' . $migration->getBundle(),
           ],
 
         ];
@@ -117,7 +117,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         // Define the content as translatable.
         $migration_plugin['destination']['translations'] = TRUE;
         // Define the dependency to the origin migration.
-        $migration_plugin['migration_dependencies']['required'][] = 'migrate_default_content_' . $migration->getEntityType() . '_' . $migration->getBundle();
+        $migration_plugin['migration_dependencies']['required'][] = 'mdc_' . $migration->getEntityType() . '_' . $migration->getBundle();
 
       }
       else {
@@ -162,7 +162,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
                 $target_ids = [];
                 // Add all possible referenceable bundles.
                 foreach ($extra as $target_bundle) {
-                  $target_ids[] = 'migrate_default_content_' . $target_entity_type . '_' . $target_bundle;
+                  $target_ids[] = 'mdc_' . $target_entity_type . '_' . $target_bundle;
                 }
                 $migration_plugin = migrate_default_content_add_target_migration(
                   $migrations,
@@ -178,7 +178,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
               // TODO: do not assume. it might be because all bundles are
               // allowed.
               else {
-                $target_id = 'migrate_default_content_' . $target_entity_type . '_' . $target_entity_type;
+                $target_id = 'mdc_' . $target_entity_type . '_' . $target_entity_type;
                 $migration_plugin = migrate_default_content_add_target_migration(
                   $migrations,
                   $migration_plugin,
@@ -195,7 +195,7 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
             case 'file':
             case 'image':
             case 'svg_image_field':
-              $target_id = 'migrate_default_content_file';
+              $target_id = 'mdc_file';
               $migration_plugin = migrate_default_content_add_target_migration(
                 $migrations,
                 $migration_plugin,
@@ -242,17 +242,17 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
     $definitions[$id] = $migration_plugin;
   }
 
-  if (isset($migrations['migrate_default_content_file'])) {
-    $definitions['migrate_default_content_file'] = [
-      'id' => 'migrate_default_content_file',
+  if (isset($migrations['mdc_file'])) {
+    $definitions['mdc_file'] = [
+      'id' => 'mdc_file',
       'migration_tags' => ['migrate_default_content'],
-      'label' => 'migrate_default_content_file',
+      'label' => 'mdc_file',
       'class' => '\Drupal\migrate\Plugin\Migration',
       'status' => 1,
       'source' => [
         'plugin' => 'embedded_data',
         'ids' => ['filename' => ['type' => 'string']],
-        'data_rows' => $migrations['migrate_default_content_file']['data_rows'],
+        'data_rows' => $migrations['mdc_file']['data_rows'],
         'constants' => [
           'source_base_path' => $source_dir . '/files/',
           'destination_base_uri' => 'public://migrate_default_content_files/',
@@ -315,7 +315,7 @@ function migrate_default_content_add_target_migration(
       // Assume all the target migrations are configured the same with the same
       // first field.
       $target_id = reset($target_ids);
-      if ($target_id === 'migrate_default_content_file') {
+      if ($target_id === 'mdc_file') {
         $target_key = 'filename';
       }
       else {
