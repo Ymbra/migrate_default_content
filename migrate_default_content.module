@@ -144,12 +144,12 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
         // migration exists add it automatically.
         /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
         $field_definition = \Drupal::service('entity_field.manager')->getFieldDefinitions($migration->getEntityType(), $migration->getBundle())[$field];
+
         // Handle special field types.
         if ($field_definition) {
           $multiple = $field_definition->getFieldStorageDefinition()->getCardinality() !== 1;
-          switch ($field_definition->getType()) {
+          switch (migrate_default_content_generic_field_type($field_definition)) {
             case 'entity_reference':
-            case 'entity_reference_revisions':
               $settings = $field_definition->getItemDefinition()->getSettings();
               $target_entity_type = $settings['target_type'];
 
@@ -193,9 +193,6 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
               break;
 
             case 'file':
-            case 'image':
-            case 'svg_image_field':
-            case 'video':
               $target_id = 'mdc_file';
               $migration_plugin = migrate_default_content_add_target_migration(
                 $migrations,
@@ -291,6 +288,27 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
       ],
     ];
   }
+}
+
+/**
+ * Provides the generic field type depending on the field item class hierarchy.
+ *
+ * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
+ *   The field definition to extract the info from.
+ *
+ * @return string
+ *   The generic field type.
+ */
+function migrate_default_content_generic_field_type($field_definition) {
+  $field_type = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_definition->getType());
+  if (is_subclass_of($field_type['class'], '\\Drupal\\file\\Plugin\\Field\\FieldType\\FileItem')) {
+    $type = 'file';
+  } elseif (is_subclass_of($field_type['class'], '\\Drupal\\Core\\Field\\Plugin\\Field\\FieldType\\EntityReferenceItem')) {
+    $type = 'entity_reference';
+        } else {
+    $type = $field_definition->getType();
+  }
+  return $type;
 }
 
 /**
