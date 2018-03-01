@@ -305,7 +305,7 @@ function migrate_default_content_generic_field_type($field_definition) {
     $type = 'file';
   } elseif (is_subclass_of($field_type['class'], '\\Drupal\\Core\\Field\\Plugin\\Field\\FieldType\\EntityReferenceItem')) {
     $type = 'entity_reference';
-        } else {
+  } else {
     $type = $field_definition->getType();
   }
   return $type;
