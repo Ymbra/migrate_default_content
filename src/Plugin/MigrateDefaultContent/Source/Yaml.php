@@ -25,9 +25,12 @@ class Yaml extends BaseSourcePlugin {
     parent::__construct($configuration);
 
     // Initialize header.
+    $this->header = [];
     $parser = new Parser();
     $data = $parser->parse(file_get_contents($this->getFullPathFile()));
-    $this->header = array_keys($data[0]);
+    foreach ($data as $item) {
+      $this->header = array_merge($this->header, array_diff(array_keys($item), $this->header));
+    }
   }
 
   /**
