@@ -48,6 +48,8 @@ class Yaml extends BaseSourcePlugin {
       'fields' => array_combine($this->getHeader(), $this->getHeader()),
       'constants' => [
         'langcode' => $this->getLanguage(),
+        // The source language will be the default for the site.
+        'source_langcode' => \Drupal::languageManager()->getDefaultLanguage()->getId(),
       ],
     ];
   }

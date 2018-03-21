@@ -5,8 +5,9 @@
  * Functions for the migrate_default_content module.
  */
 
-use Symfony\Component\Yaml\Parser;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Symfony\Component\Yaml\Parser;
 
 /**
  * Implements hook_migration_plugins_alter().
@@ -114,6 +115,8 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
 
         // Define the langcode of the translation.
         $migration_plugin['process']['langcode'] = 'constants/langcode';
+        // The source will always be the default language of the site.
+        $migration_plugin['process']['content_translation_source'] = 'constants/source_langcode';
         // Define the content as translatable.
         $migration_plugin['destination']['translations'] = TRUE;
         // Define the dependency to the origin migration.
@@ -299,13 +302,15 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
  * @return string
  *   The generic field type.
  */
-function migrate_default_content_generic_field_type($field_definition) {
+function migrate_default_content_generic_field_type(FieldDefinitionInterface $field_definition) {
   $field_type = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_definition->getType());
   if (is_subclass_of($field_type['class'], '\\Drupal\\file\\Plugin\\Field\\FieldType\\FileItem')) {
     $type = 'file';
-  } elseif (is_subclass_of($field_type['class'], '\\Drupal\\Core\\Field\\Plugin\\Field\\FieldType\\EntityReferenceItem')) {
+  }
+  elseif (is_subclass_of($field_type['class'], '\\Drupal\\Core\\Field\\Plugin\\Field\\FieldType\\EntityReferenceItem')) {
     $type = 'entity_reference';
-  } else {
+  }
+  else {
     $type = $field_definition->getType();
   }
   return $type;
