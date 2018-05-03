@@ -100,7 +100,7 @@ class Yaml extends SourcePluginBase {
   /**
    * {@inheritdoc}
    */
-  public function count() {
+  public function count($refresh = FALSE) {
     return count($this->dataRows);
   }
 
