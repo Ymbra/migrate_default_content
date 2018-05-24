@@ -306,10 +306,10 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
  */
 function migrate_default_content_generic_field_type(FieldDefinitionInterface $field_definition) {
   $field_type = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_definition->getType());
-  if (is_a($field_type['class'], FileItem::class)) {
+  if (is_a($field_type['class'], FileItem::class, TRUE)) {
     $type = 'file';
   }
-  elseif (is_a($field_type['class'], EntityReferenceItem::class)) {
+  elseif (is_a($field_type['class'], EntityReferenceItem::class, TRUE)) {
     $type = 'entity_reference';
   }
   else {
