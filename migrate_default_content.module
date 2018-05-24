@@ -336,7 +336,13 @@ function migrate_default_content_add_target_migration(
     if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id' && $dest_subfield[1] != 'target_revision_id') {
       return $migration_plugin;
     }
-    if ($multiple) {
+
+    // If we are handling references as nested values, use the iterator pattern.
+    if (!isset($dest_subfield[1])) {
+      // Add the array wrapper process to single value fields.
+      if (!$multiple) {
+        $migration_plugin['process'][$dest_field][] = ['plugin' => 'array_wrapper'];
+      }
 
       // Assume all the target migrations are configured the same with the same
       // first field.
