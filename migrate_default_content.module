@@ -161,39 +161,27 @@ function migrate_default_content_migration_plugins_alter(&$definitions) {
               // In the case of an entity reference the extra configuration is
               // the bundles it should reference.
               if (isset($settings['handler_settings']['target_bundles'])) {
-                $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
+                $bundles = $settings['handler_settings']['target_bundles'];
               }
-              if (!empty($extra)) {
-                $target_ids = [];
-                // Add all possible referenceable bundles.
-                foreach ($extra as $target_bundle) {
-                  $target_ids[] = 'mdc_' . $target_entity_type . '_' . $target_bundle;
-                }
-                $migration_plugin = migrate_default_content_add_target_migration(
-                  $migrations,
-                  $migration_plugin,
-                  $dest_field,
-                  $target_ids,
-                  $target_entity_type,
-                  $multiple,
-                  $field_definition->getType()
-                );
-              }
-              // Assume is an entity with only one bundle. e.g. user.
-              // TODO: do not assume. it might be because all bundles are
-              // allowed.
+              // If bundles are not specified, cover all of them.
               else {
-                $target_id = 'mdc_' . $target_entity_type . '_' . $target_entity_type;
-                $migration_plugin = migrate_default_content_add_target_migration(
-                  $migrations,
-                  $migration_plugin,
-                  $dest_field,
-                  [$target_id],
-                  $target_entity_type,
-                  $multiple,
-                  $field_definition->getType()
-                );
+                $bundles = \Drupal::getContainer()->get('entity_type.bundle.info')->getBundleInfo($target_entity_type);
               }
+              $extra = array_merge($extra, array_keys($bundles));
+              $target_ids = [];
+              // Add all possible referenceable bundles.
+              foreach ($extra as $target_bundle) {
+                $target_ids[] = 'mdc_' . $target_entity_type . '_' . $target_bundle;
+              }
+              $migration_plugin = migrate_default_content_add_target_migration(
+                $migrations,
+                $migration_plugin,
+                $dest_field,
+                $target_ids,
+                $target_entity_type,
+                $multiple,
+                $field_definition->getType()
+              );
 
               break;
 
