@@ -5,3 +5,4 @@ core: 8.x
 package: Migration
 dependencies:
   - drupal:migrate (>= 8.4.x)
+  - migrate_source_yml
