@@ -8,6 +8,13 @@ namespace Drupal\migrate_default_content;
 interface SourcePluginInterface {
 
   /**
+   * Get the migration ID.
+   *
+   * @return string
+   */
+  public function getId();
+
+  /**
    * Get the migration language represented on the data source.
    *
    * @return array
