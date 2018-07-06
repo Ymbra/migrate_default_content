@@ -60,7 +60,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
   protected $sourceDir;
 
   /**
-   * the list of defined migrations.
+   * The list of defined migrations.
    *
    * @var array
    */
@@ -96,7 +96,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
     $generated = [];
 
     foreach ($this->getMigrations() as $id => $migration) {
-      $generated[$id] =  ($id === 'mdc_file') ? $this->fileMigration($migration) : $this->generateMigrationPlugin($migration);
+      $generated[$id] = ($id === 'mdc_file') ? $this->fileMigration($migration) : $this->generateMigrationPlugin($migration);
     }
 
     return $generated;
@@ -109,7 +109,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *   Array containing all the migrations defined in the source directory.
    */
   protected function getMigrations() {
-    if (!isset ($this->migrations)) {
+    if (!isset($this->migrations)) {
       $migrations = [];
       if ($handle = opendir($this->sourceDir)) {
         while (($file = readdir($handle)) !== FALSE) {
@@ -117,7 +117,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
             $extension = pathinfo($file, PATHINFO_EXTENSION);
             foreach ($this->sourcePluginManager->getDefinitions() as $definition) {
               if ($definition['extension'] == $extension) {
-                $config = ['source_dir' => $this->sourceDir, 'filename' => $file,];
+                $config = ['source_dir' => $this->sourceDir, 'filename' => $file];
 
                 /** @var \Drupal\migrate_default_content\SourcePluginInterface $plugin */
                 $plugin = $this->sourcePluginManager->createInstance($definition['id'], $config);
@@ -137,7 +137,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
             $data_rows[] = ['filename' => $file];
           }
         }
-        $migrations['mdc_file'] = ['data_rows' => $data_rows,];
+        $migrations['mdc_file'] = ['data_rows' => $data_rows];
         closedir($handle);
       }
 
@@ -147,6 +147,15 @@ class MigrationGenerator implements MigrationGeneratorInterface {
     return $this->migrations;
   }
 
+  /**
+   * Returns the generic file migration.
+   *
+   * @param array $migration
+   *   The files migration definition.
+   *
+   * @return array
+   *   The files migration plugin structure.
+   */
   protected function fileMigration(array $migration) {
     return [
       'id' => 'mdc_file',
@@ -196,6 +205,15 @@ class MigrationGenerator implements MigrationGeneratorInterface {
     ];
   }
 
+  /**
+   * Generates the migration plugin defition given a migration plugin object.
+   *
+   * @param \Drupal\migrate_default_content\SourcePluginInterface $migration
+   *   The migration source plugin.
+   *
+   * @return array
+   *   The migration plugin structure.
+   */
   protected function generateMigrationPlugin(SourcePluginInterface $migration) {
     $migration_plugin = [
       'id' => $migration->getKey(),
@@ -372,18 +390,18 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *
    * @param array $migration_plugin
    *   The migration plugin.
-   * @param $dest_field
+   * @param string $dest_field
    *   The destination field name.
-   * @param $target_ids
+   * @param array $target_ids
    *   The possible target types to reference.
-   * @param $target_entity_type
+   * @param string $target_entity_type
    *   The target entity type to reference.
    * @param bool $multiple
    *   Whether the reference is multiple or not.
    * @param string $field_type
    *   The field type to be referenced.
    */
-  protected function addTargetMigration(array &$migration_plugin, $dest_field, $target_ids, $target_entity_type, $multiple, $field_type = 'entity_reference') {
+  protected function addTargetMigration(array &$migration_plugin, $dest_field, array $target_ids, $target_entity_type, $multiple, $field_type = 'entity_reference') {
     $migrations = $this->getMigrations();
     $target_ids = array_intersect(array_keys($migrations), $target_ids);
     if (!empty($target_ids)) {
@@ -455,7 +473,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
   }
 
   /**
-   * Provides the generic field type depending on the field item class hierarchy.
+   * Returns the generic field type depending on the field item class hierarchy.
    *
    * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
    *   The field definition to extract the info from.
@@ -463,7 +481,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    * @return string
    *   The generic field type.
    */
-  function fieldType(FieldDefinitionInterface $field_definition) {
+  public function fieldType(FieldDefinitionInterface $field_definition) {
     $field_type = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_definition->getType());
     if (is_a($field_type['class'], FileItem::class, TRUE)) {
       $type = 'file';
@@ -492,7 +510,8 @@ class MigrationGenerator implements MigrationGeneratorInterface {
     $target_id = reset($target_ids);
     if ($target_id === 'mdc_file') {
       $target_key = 'filename';
-    } else {
+    }
+    else {
       $migrations = $this->getMigrations();
       $target_key = $migrations[$target_id]->getKey();
     }

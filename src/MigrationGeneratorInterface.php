@@ -12,6 +12,7 @@ interface MigrationGeneratorInterface {
    *
    * @param array $definitions
    *   (optional) The already existing migration definitions in the system.
+   *
    * @return array
    *   The generated migration definitions array.
    */
