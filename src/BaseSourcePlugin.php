@@ -5,6 +5,13 @@ namespace Drupal\migrate_default_content;
 class BaseSourcePlugin implements SourcePluginInterface {
 
   /**
+   * The migration ID.
+   *
+   * @var string
+   */
+  protected $id;
+
+  /**
    * The header of the data source.
    *
    * @var array
@@ -59,6 +66,19 @@ class BaseSourcePlugin implements SourcePluginInterface {
       $this->language = $fileparts[2];
     }
     $this->fullPathFile = $configuration['source_dir'] . '/' . $configuration['filename'];
+
+    // Generate the migration ID.
+    $this->id = 'mdc_' . $this->getEntityType() . '_' . $this->getBundle();
+    if (!empty($this->getLanguage())) {
+      $this->id .= '_' . $this->getLanguage();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getId() {
+    return $this->id;
   }
 
   /**
