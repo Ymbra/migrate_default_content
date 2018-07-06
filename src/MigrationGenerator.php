@@ -3,6 +3,7 @@
 namespace Drupal\migrate_default_content;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
@@ -16,13 +17,6 @@ use Symfony\Component\Yaml\Parser;
  * Generates Migration definitions from existing default content files.
  */
 class MigrationGenerator implements MigrationGeneratorInterface {
-
-  /**
-   * Drupal\Core\Config\ConfigFactoryInterface definition.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
 
   /**
    * Drupal\migrate_default_content\SourcePluginManager definition.
@@ -53,6 +47,13 @@ class MigrationGenerator implements MigrationGeneratorInterface {
   protected $fieldTypePluginManager;
 
   /**
+   * The entity type bundle info.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected $entityTypeBundleInfo;
+
+  /**
    * The default content definitions source directory.
    *
    * @var string
@@ -79,13 +80,15 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *   The entity field manager.
    * @param \Drupal\Core\Field\FieldTypePluginManagerInterface $field_type_plugin_manager
    *   The field type plugin manager.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   *   The entity type bundle info.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, SourcePluginManager $source_plugin_manager, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_plugin_manager) {
-    $this->configFactory = $config_factory;
+  public function __construct(ConfigFactoryInterface $config_factory, SourcePluginManager $source_plugin_manager, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_plugin_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info) {
     $this->sourcePluginManager = $source_plugin_manager;
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->fieldTypePluginManager = $field_type_plugin_manager;
+    $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->sourceDir = DRUPAL_ROOT . '/' . $config_factory->get('migrate_default_content.settings')->get('source_dir');
   }
 
@@ -304,38 +307,26 @@ class MigrationGenerator implements MigrationGeneratorInterface {
               // In the case of an entity reference the extra configuration is
               // the bundles it should reference.
               if (isset($settings['handler_settings']['target_bundles'])) {
-                $extra = array_merge($extra, $settings['handler_settings']['target_bundles']);
+                $bundles = $settings['handler_settings']['target_bundles'];
               }
-              if (!empty($extra)) {
-                $target_ids = [];
-                // Add all possible referenceable bundles.
-                foreach ($extra as $target_bundle) {
-                  $target_ids[] = 'mdc_' . $target_entity_type . '_' . $target_bundle;
-                }
-                $this->addTargetMigration(
-                  $migration_plugin,
-                  $dest_field,
-                  $target_ids,
-                  $target_entity_type,
-                  $multiple,
-                  $field_definition->getType()
-                );
-              }
-              // Assume is an entity with only one bundle. e.g. user.
-              // TODO: do not assume. it might be because all bundles are
-              // allowed.
+              // If bundles are not specified, cover all of them.
               else {
-                $target_id = 'mdc_' . $target_entity_type . '_' . $target_entity_type;
-                $this->addTargetMigration(
-                  $migration_plugin,
-                  $dest_field,
-                  [$target_id],
-                  $target_entity_type,
-                  $multiple,
-                  $field_definition->getType()
-                );
+                $bundles = $this->entityTypeBundleInfo->getBundleInfo($target_entity_type);
               }
-
+              $extra = array_merge($extra, array_keys($bundles));
+              $target_ids = [];
+              // Add all possible referenceable bundles.
+              foreach ($extra as $target_bundle) {
+                $target_ids[] = 'mdc_' . $target_entity_type . '_' . $target_bundle;
+              }
+              $this->addTargetMigration(
+                $migration_plugin,
+                $dest_field,
+                $target_ids,
+                $target_entity_type,
+                $multiple,
+                $field_definition->getType()
+              );
               break;
 
             case 'file':
