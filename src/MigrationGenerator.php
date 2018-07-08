@@ -298,7 +298,6 @@ class MigrationGenerator implements MigrationGeneratorInterface {
 
         // Handle special field types.
         if ($field_definition) {
-          $multiple = $field_definition->getFieldStorageDefinition()->getCardinality() !== 1;
           switch ($this->fieldType($field_definition)) {
             case 'entity_reference':
               $settings = $field_definition->getItemDefinition()->getSettings();
@@ -324,7 +323,6 @@ class MigrationGenerator implements MigrationGeneratorInterface {
                 $dest_field,
                 $target_ids,
                 $target_entity_type,
-                $multiple,
                 $field_definition->getType()
               );
               break;
@@ -336,7 +334,6 @@ class MigrationGenerator implements MigrationGeneratorInterface {
                 $dest_field,
                 [$target_id],
                 'file',
-                $multiple,
                 $field_definition->getType()
               );
 
@@ -387,12 +384,10 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *   The possible target types to reference.
    * @param string $target_entity_type
    *   The target entity type to reference.
-   * @param bool $multiple
-   *   Whether the reference is multiple or not.
    * @param string $field_type
    *   The field type to be referenced.
    */
-  protected function addTargetMigration(array &$migration_plugin, $dest_field, array $target_ids, $target_entity_type, $multiple, $field_type = 'entity_reference') {
+  protected function addTargetMigration(array &$migration_plugin, $dest_field, array $target_ids, $target_entity_type, $field_type = 'entity_reference') {
     $migrations = $this->getMigrations();
     $target_ids = array_intersect(array_keys($migrations), $target_ids);
     if (!empty($target_ids)) {
@@ -400,59 +395,45 @@ class MigrationGenerator implements MigrationGeneratorInterface {
       if (isset($dest_subfield[1]) && $dest_subfield[1] != 'target_id' && $dest_subfield[1] != 'target_revision_id') {
         return $migration_plugin;
       }
-      if ($multiple) {
-        $target_key = $this->targetMigrationKey($target_ids);
+      $target_key = $this->targetMigrationKey($target_ids);
 
-        $process = [
-          'plugin' => 'iterator',
-          'process' => [
-            'target_id' => [
-              'plugin' => 'migration_lookup',
-              'migration' => $target_ids,
-              'source' => $target_key,
-              'no_stub' => TRUE,
-            ],
+      $migration_plugin['process'][$dest_field][] = [
+        'plugin' => 'normalize_entity_reference',
+        'replacement_key' => $target_key,
+        'delimiter' => ',',
+      ];
+
+      $process = [
+        'plugin' => 'sub_process',
+        'process' => [
+          'target_id' => [
+            'plugin' => 'migration_lookup',
+            'migration' => $target_ids,
+            'source' => $target_key,
           ],
-        ];
+        ],
+      ];
 
-        // Add the rest of subproperties for this field.
-        $definition = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_type);
-        $field_definition = BaseFieldDefinition::create($field_type);
-        $schema = call_user_func([$definition['class'], 'schema'], $field_definition);
-        foreach (array_keys($schema['columns']) as $subproperty) {
-          if ($subproperty != 'target_id') {
-            $process['process'][$subproperty] = $subproperty;
-          }
-          // Add only for entity_reference revisions.
-          if ($subproperty == 'target_revision_id') {
-            $process['process']['target_revision_id'] = [
-              'plugin' => 'content_id_to_revision_reference',
-              'target_entity_type' => $target_entity_type,
-              'source' => '@target_id',
-              'lookup_id' => TRUE,
-            ];
-          }
+      // Add the rest of subproperties for this field.
+      $definition = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_type);
+      $field_definition = BaseFieldDefinition::create($field_type);
+      $schema = call_user_func([$definition['class'], 'schema'], $field_definition);
+      foreach (array_keys($schema['columns']) as $subproperty) {
+        if ($subproperty != 'target_id') {
+          $process['process'][$subproperty] = $subproperty;
         }
-
-        $migration_plugin['process'][$dest_field][] = $process;
-      }
-      else {
-        // We don't need a source because only the first process plugin in
-        // the pipeline should have it and we already have the explode plugin.
-        $migration_plugin['process'][$dest_field][] = [
-          'plugin' => 'migration_lookup',
-          'migration' => $target_ids,
-          'no_stub' => TRUE,
-        ];
         // Add only for entity_reference revisions.
-        if ($field_type === 'entity_reference_revisions') {
-          $migration_plugin['process'][$dest_field][] = [
+        if ($subproperty == 'target_revision_id') {
+          $process['process']['target_revision_id'] = [
             'plugin' => 'content_id_to_revision_reference',
             'target_entity_type' => $target_entity_type,
-            'lookup_id' => FALSE,
+            'source' => '@target_id',
+            'lookup_id' => TRUE,
           ];
         }
       }
+
+      $migration_plugin['process'][$dest_field][] = $process;
 
       // Avoid dependencies on itself.
       foreach ($target_ids as $target_id) {
