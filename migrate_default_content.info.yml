@@ -1,4 +1,4 @@
-name: Migrate default content
+name: Migrate Default Content
 type: module
 description: Provides dummy content.
 core: 8.x
