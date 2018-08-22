@@ -415,7 +415,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
       ];
 
       // Add the rest of subproperties for this field.
-      $definition = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_type);
+      $definition = $this->fieldTypePluginManager->getDefinition($field_type);
       $field_definition = BaseFieldDefinition::create($field_type);
       $schema = call_user_func([$definition['class'], 'schema'], $field_definition);
       foreach (array_keys($schema['columns']) as $subproperty) {
@@ -454,7 +454,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *   The generic field type.
    */
   public function fieldType(FieldDefinitionInterface $field_definition) {
-    $field_type = \Drupal::service('plugin.manager.field.field_type')->getDefinition($field_definition->getType());
+    $field_type = $this->fieldTypePluginManager->getDefinition($field_definition->getType());
     if (is_a($field_type['class'], FileItem::class, TRUE)) {
       $type = 'file';
     }
