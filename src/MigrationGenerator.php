@@ -219,7 +219,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    */
   protected function generateMigrationPlugin(SourcePluginInterface $migration) {
     $migration_plugin = [
-      'id' => $migration->getKey(),
+      'id' => $migration->getId(),
       'migration_tags' => ['migrate_default_content'],
       'label' => $migration->getId(),
       'class' => '\Drupal\migrate\Plugin\Migration',
