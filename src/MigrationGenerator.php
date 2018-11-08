@@ -456,7 +456,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
 
       // Avoid dependencies on itself.
       foreach ($target_ids as $target_id) {
-        if ($target_id != $migration_plugin['id']) {
+        if ($target_id != $migration_plugin['label']) {
           $migration_plugin['migration_dependencies']['required'][] = $target_id;
         }
       }
