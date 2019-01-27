@@ -3,13 +3,15 @@
 namespace Drupal\migrate_default_content;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\Plugin\Field\FieldType\FileItem;
 use Symfony\Component\Yaml\Parser;
 
@@ -17,6 +19,8 @@ use Symfony\Component\Yaml\Parser;
  * Generates Migration definitions from existing default content files.
  */
 class MigrationGenerator implements MigrationGeneratorInterface {
+
+  use StringTranslationTrait;
 
   /**
    * Drupal\migrate_default_content\SourcePluginManager definition.
@@ -54,6 +58,13 @@ class MigrationGenerator implements MigrationGeneratorInterface {
   protected $entityTypeBundleInfo;
 
   /**
+   * The logger class.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * The default content definitions source directory.
    *
    * @var string
@@ -82,13 +93,24 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *   The field type plugin manager.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
    *   The entity type bundle info.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   The logger factory.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, SourcePluginManager $source_plugin_manager, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_plugin_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info) {
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    SourcePluginManager $source_plugin_manager,
+    EntityTypeManagerInterface $entity_type_manager,
+    EntityFieldManagerInterface $entity_field_manager,
+    FieldTypePluginManagerInterface $field_type_plugin_manager,
+    EntityTypeBundleInfoInterface $entity_type_bundle_info,
+    LoggerChannelFactoryInterface $loggerChannelFactory
+  ) {
     $this->sourcePluginManager = $source_plugin_manager;
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->fieldTypePluginManager = $field_type_plugin_manager;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
+    $this->logger = $loggerChannelFactory->get('migrate_default_content');
     $this->sourceDir = DRUPAL_ROOT . '/' . $config_factory->get('migrate_default_content.settings')->get('source_dir');
   }
 
@@ -112,41 +134,48 @@ class MigrationGenerator implements MigrationGeneratorInterface {
    *   Array containing all the migrations defined in the source directory.
    */
   protected function getMigrations() {
-    if (!isset($this->migrations)) {
-      $migrations = [];
-      if ($handle = opendir($this->sourceDir)) {
-        while (($file = readdir($handle)) !== FALSE) {
-          if ($file != "." && $file != "..") {
-            $extension = pathinfo($file, PATHINFO_EXTENSION);
-            foreach ($this->sourcePluginManager->getDefinitions() as $definition) {
-              if ($definition['extension'] == $extension) {
-                $config = ['source_dir' => $this->sourceDir, 'filename' => $file];
+    if (isset($this->migrations)) {
+      return $this->migrations;
+    }
+    if (!is_dir($this->sourceDir)) {
+      $message = $this->t('You need to create a directory with the migration files in "@directory".', [
+        '@directory' => $this->sourceDir,
+      ]);
+      $this->logger->warning($message);
+      return [];
+    }
+    $migrations = [];
+    if ($handle = opendir($this->sourceDir)) {
+      while (($file = readdir($handle)) !== FALSE) {
+        if ($file != "." && $file != "..") {
+          $extension = pathinfo($file, PATHINFO_EXTENSION);
+          foreach ($this->sourcePluginManager->getDefinitions() as $definition) {
+            if ($definition['extension'] == $extension) {
+              $config = ['source_dir' => $this->sourceDir, 'filename' => $file];
 
-                /** @var \Drupal\migrate_default_content\SourcePluginInterface $plugin */
-                $plugin = $this->sourcePluginManager->createInstance($definition['id'], $config);
-                $migrations[$plugin->getId()] = $plugin;
-              }
+              /** @var \Drupal\migrate_default_content\SourcePluginInterface $plugin */
+              $plugin = $this->sourcePluginManager->createInstance($definition['id'], $config);
+              $migrations[$plugin->getId()] = $plugin;
             }
           }
         }
-        closedir($handle);
       }
-
-      // Add files migration.
-      if (file_exists($this->sourceDir . '/files') && $handle = opendir($this->sourceDir . '/files')) {
-        $data_rows = [];
-        while (($file = readdir($handle)) !== FALSE) {
-          if ($file != "." && $file != "..") {
-            $data_rows[] = ['filename' => $file];
-          }
-        }
-        $migrations['mdc_file'] = ['data_rows' => $data_rows];
-        closedir($handle);
-      }
-
-      $this->migrations = $migrations;
+      closedir($handle);
     }
 
+    // Add files migration.
+    if (file_exists($this->sourceDir . '/files') && $handle = opendir($this->sourceDir . '/files')) {
+      $data_rows = [];
+      while (($file = readdir($handle)) !== FALSE) {
+        if ($file != "." && $file != "..") {
+          $data_rows[] = ['filename' => $file];
+        }
+      }
+      $migrations['mdc_file'] = ['data_rows' => $data_rows];
+      closedir($handle);
+    }
+
+    $this->migrations = $migrations;
     return $this->migrations;
   }
 

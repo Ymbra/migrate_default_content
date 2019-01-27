@@ -5,4 +5,11 @@ services:
 
   migrate_default_content.migration_generator:
     class: Drupal\migrate_default_content\MigrationGenerator
-    arguments: ['@config.factory', '@plugin.manager.migrate_default_content.source', '@entity_type.manager', '@entity_field.manager', '@plugin.manager.field.field_type', '@entity_type.bundle.info']
+    arguments:
+      - '@config.factory'
+      - '@plugin.manager.migrate_default_content.source'
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@plugin.manager.field.field_type'
+      - '@entity_type.bundle.info'
+      - '@logger.factory'
