@@ -23,7 +23,7 @@ class NormalizeEntityReference extends ProcessPluginBase {
     if (is_string($value)) {
       $value = explode($this->configuration['delimiter'], $value);
     }
-    foreach ($value as $key => &$subvalue) {
+    foreach ($value ?? [] as $key => &$subvalue) {
       if (is_array($subvalue)) {
         $count = 0;
         foreach (array_keys($subvalue) as $subkey) {
