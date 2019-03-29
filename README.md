@@ -104,3 +104,20 @@ like or node.article.es.yml, beeing the original migration node.article.yml
 There must exist always the field 'translation_origin', which references to the key of the origin content.
 
 See the examples: node.article.yml and node.article.es.yml in the example_default_content_yml folder.
+```
+
+# How to
+
+In order to use this tool you will have to use migrate tools module, for that purpose you can go [here](https://www.drupal.org/docs/8/api/migrate-api/executing-migrations) for further information about migrate.
+Moreover all migrations have a tag called 'migrate_defult_content', here you are a basic commands to run it after placing the files in the folder, The command below migrates with the tag 'migrate_default_content' so that you can verify the results on your Drupal 8 site:
+
+```drush migrate-import --tag=migrate_default_content```
+
+You can also use some extra options to migrate e.g:
+```
+--group : Name of the migration group to run
+--limit : Limit on the length of each migration process, expressed in seconds or number of items
+...
+```
+
+More options available [Here](https://drushcommands.com/drush-8x/migrate/migrate-import/)
