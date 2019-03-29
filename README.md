@@ -104,7 +104,7 @@ like or node.article.es.yml, beeing the original migration node.article.yml
 There must exist always the field 'translation_origin', which references to the key of the origin content.
 
 See the examples: node.article.yml and node.article.es.yml in the example_default_content_yml folder.
-```
+
 
 # How to
 
