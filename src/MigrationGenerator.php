@@ -286,7 +286,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
           [
             'plugin' => 'migration_lookup',
             'source' => $field,
-            'migration' => $migration->getId(),
+            'migration' => 'mdc_' . $migration->getEntityType() . '_' . $migration->getBundle(),
           ],
         ];
 
@@ -297,7 +297,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
         // Define the content as translatable.
         $migration_plugin['destination']['translations'] = TRUE;
         // Define the dependency to the origin migration.
-        $migration_plugin['migration_dependencies']['required'][] = $migration->getId();
+        $migration_plugin['migration_dependencies']['required'][] = 'mdc_' . $migration->getEntityType() . '_' . $migration->getBundle();
 
       }
       else {
