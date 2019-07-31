@@ -100,7 +100,8 @@ class BaseSourcePlugin implements SourcePluginInterface {
    */
   public function getKey() {
     // Assume the key is the first field of the file.
-    return trim(reset($this->getHeader()));
+    $header = $this->getHeader();
+    return trim(reset($header));
   }
 
   /**
