@@ -271,6 +271,7 @@ class MigrationGenerator implements MigrationGeneratorInterface {
       ];
     }
     $header = $migration->getHeader();
+    $field_definitions = $this->entityFieldManager->getFieldDefinitions($migration->getEntityType(), $migration->getBundle());
     foreach ($header as $field) {
       // Headers can have spaces or line endings as is the case for the last
       // field.
@@ -322,11 +323,9 @@ class MigrationGenerator implements MigrationGeneratorInterface {
 
         // If this an entity_reference field and a migrate_default_content
         // migration exists add it automatically.
-        /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
-        $field_definition = $this->entityFieldManager->getFieldDefinitions($migration->getEntityType(), $migration->getBundle())[$field];
-
-        // Handle special field types.
-        if ($field_definition) {
+        if (isset($field_definitions[$field])) {
+          /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
+          $field_definition = $field_definitions[$field];
           switch ($this->fieldType($field_definition)) {
             case 'entity_reference':
               $settings = $field_definition->getItemDefinition()->getSettings();
